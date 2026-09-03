@@ -1,0 +1,6 @@
+{
+  "name": "Sahyog Worker",
+  "description": "Operational portal for cooperative-member workers to manage duty availability, job broadcasts, active assignments, cooperative earnings, and federation verification.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
