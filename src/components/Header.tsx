@@ -82,7 +82,7 @@ export const Header: React.FC<HeaderProps> = ({
               className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1.5 text-[12px] font-medium text-[#14181F] hover:bg-[#FAFAF9] border border-[#E7E5E1] rounded-[8px] transition-colors focus:outline-hidden focus:ring-2 focus:ring-[#1F4D3D]"
             >
               <Star className="w-3.5 h-3.5 fill-[#C9A227] text-[#C9A227]" />
-              <span className="tabular-nums font-semibold">{(worker?.rating ?? 4.92).toFixed(2)}</span>
+              <span className="tabular-nums font-semibold">{worker.rating.toFixed(2)}</span>
               <span className="text-[#6B7280]">({worker.reviewCount})</span>
             </button>
 

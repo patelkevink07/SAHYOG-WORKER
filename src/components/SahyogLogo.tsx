@@ -6,15 +6,16 @@ interface SahyogLogoProps {
 }
 
 export const SahyogLogo: React.FC<SahyogLogoProps> = ({ className = '', size = 'md' }) => {
-  const sizeClasses = {
-    sm: 'w-9 h-9',
-    md: 'w-11 h-11',
-    lg: 'w-14 h-14'
+  const dimensions = {
+    sm: { width: 36, height: 36 },
+    md: { width: 44, height: 44 },
+    lg: { width: 56, height: 56 }
   }[size];
 
   return (
     <div 
-      className={`inline-flex items-center justify-center rounded-lg bg-[#1F4D3D] text-[#FAFAF9] p-1.5 select-none shadow-xs ${sizeClasses} ${className}`}
+      className={`inline-flex items-center justify-center rounded-lg bg-[#1F4D3D] text-[#FAFAF9] p-1.5 select-none shadow-xs ${className}`}
+      style={{ width: dimensions.width, height: dimensions.height }}
       aria-label="Sahyog Cooperative Logo"
     >
       <svg

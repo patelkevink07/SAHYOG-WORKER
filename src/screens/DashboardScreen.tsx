@@ -84,7 +84,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                 className="text-[13px] font-[400] text-[#6B7280] mt-1 leading-snug truncate"
               >
                 {isOnline 
-                  ? `Receiving immediate priority dispatches within ${(worker?.operationalRadiusKm ?? 6.0).toFixed(1)} km radius`
+                  ? `Receiving immediate priority dispatches within ${worker.operationalRadiusKm.toFixed(1)} km radius`
                   : 'No new broadcast dispatches will be routed to your queue'}
               </p>
             </div>
@@ -320,21 +320,3 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
     </div>
   );
 };
-
-import { useEffect, useState } from 'react';
-import { supabase } from '../data/supabase';
-
-useEffect(() => {
-  // 1. Fetch current bookings
-  supabase.from('bookings').select('*').then(({ data }) => setJobs(data || []));
-
-  // 2. Listen live for incoming new jobs
-  const subscription = supabase
-    .channel('live-jobs')
-    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'bookings' }, (payload) => {
-      alert('New job received live!');
-    })
-    .subscribe();
-
-  return () => { supabase.removeChannel(subscription); };
-}, []);

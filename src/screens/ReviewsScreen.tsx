@@ -46,7 +46,7 @@ export const ReviewsScreen: React.FC<ReviewsScreenProps> = ({
             </span>
             <div className="flex items-baseline gap-2 mt-1">
               <span className="text-[36px] font-[650] text-[#14181F] tabular-nums leading-none">
-                {(worker?.rating ?? 4.92).toFixed(2)}
+                {worker.rating.toFixed(2)}
               </span>
               <span className="text-[16px] text-[#6B7280] font-[500]">
                 / 5.0

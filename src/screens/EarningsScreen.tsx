@@ -147,12 +147,6 @@ export const EarningsScreen: React.FC<EarningsScreenProps> = ({
         <div className="grid grid-cols-7 gap-2 pt-2 pb-1 items-end h-32">
           {weekDays.map((wd) => {
             const heightPct = Math.max(Math.round((wd.amount / maxDailyAmount) * 100), 8);
-            const barHeightClass = 
-              heightPct >= 85 ? 'h-24' :
-              heightPct >= 70 ? 'h-20' :
-              heightPct >= 55 ? 'h-16' :
-              heightPct >= 40 ? 'h-12' :
-              heightPct >= 25 ? 'h-8' : 'h-5';
 
             return (
               <div key={wd.day} className="flex flex-col items-center h-full justify-end group">
@@ -160,7 +154,8 @@ export const EarningsScreen: React.FC<EarningsScreenProps> = ({
                   ₹{wd.amount}
                 </span>
                 <div 
-                  className={`w-full max-w-[28px] bg-[#1F4D3D] hover:bg-[#173C2F] rounded-t-[4px] transition-all ${barHeightClass}`}
+                  className="w-full max-w-[28px] bg-[#1F4D3D] hover:bg-[#173C2F] rounded-t-[4px] transition-all"
+                  style={{ height: `${heightPct}%` }}
                   title={`${wd.day}: ₹${wd.amount} (${wd.jobs} jobs)`}
                 />
                 <span className="text-[11px] font-[500] text-[#14181F] mt-2">

@@ -40,49 +40,22 @@ const STORAGE_KEYS = {
   WEEK_EARNINGS: 'sahyog_worker_week_earnings'
 };
 
-const safeStorage = {
-  getItem: (key: string): string | null => {
-    try {
-      if (typeof window !== 'undefined' && window.localStorage) {
-        return window.localStorage.getItem(key);
-      }
-    } catch {
-      // Storage access blocked in sandboxed iframe or private browsing
-    }
-    return null;
-  },
-  setItem: (key: string, value: string): void => {
-    try {
-      if (typeof window !== 'undefined' && window.localStorage) {
-        window.localStorage.setItem(key, value);
-      }
-    } catch {}
-  },
-  removeItem: (key: string): void => {
-    try {
-      if (typeof window !== 'undefined' && window.localStorage) {
-        window.localStorage.removeItem(key);
-      }
-    } catch {}
-  }
-};
-
 export default function App() {
   // 1. Authentication State
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => {
-    const saved = safeStorage.getItem(STORAGE_KEYS.IS_LOGGED_IN);
+    const saved = localStorage.getItem(STORAGE_KEYS.IS_LOGGED_IN);
     return saved !== null ? saved === 'true' : true; // Default to true so user immediately sees dashboard
   });
 
   // 2. Online / Offline Duty Availability (Most visually prominent control)
   const [isOnline, setIsOnline] = useState<boolean>(() => {
-    const saved = safeStorage.getItem(STORAGE_KEYS.IS_ONLINE);
+    const saved = localStorage.getItem(STORAGE_KEYS.IS_ONLINE);
     return saved !== null ? saved === 'true' : true;
   });
 
   // 3. Navigation State
   const [currentScreen, setCurrentScreen] = useState<ScreenType>(() => {
-    const saved = safeStorage.getItem(STORAGE_KEYS.CURRENT_SCREEN) as ScreenType;
+    const saved = localStorage.getItem(STORAGE_KEYS.CURRENT_SCREEN) as ScreenType;
     return (saved && ['dashboard', 'job_detail', 'active_job', 'earnings', 'profile', 'reviews'].includes(saved)) 
       ? saved 
       : 'dashboard';
@@ -90,28 +63,14 @@ export default function App() {
 
   // 4. Worker Profile State
   const [worker, setWorker] = useState<WorkerProfile>(() => {
-    try {
-      const saved = safeStorage.getItem(STORAGE_KEYS.WORKER_PROFILE);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        return { ...INITIAL_WORKER, ...parsed };
-      }
-    } catch {}
-    return INITIAL_WORKER;
+    const saved = localStorage.getItem(STORAGE_KEYS.WORKER_PROFILE);
+    return saved ? JSON.parse(saved) : INITIAL_WORKER;
   });
 
   // 5. Incoming Job Requests Queue
   const [incomingJobs, setIncomingJobs] = useState<JobRequest[]>(() => {
-    try {
-      const saved = safeStorage.getItem(STORAGE_KEYS.INCOMING_JOBS);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed;
-        }
-      }
-    } catch {}
-    return INITIAL_INCOMING_JOBS;
+    const saved = localStorage.getItem(STORAGE_KEYS.INCOMING_JOBS);
+    return saved ? JSON.parse(saved) : INITIAL_INCOMING_JOBS;
   });
 
   // 6. Selected Job for Detail View
@@ -119,15 +78,14 @@ export default function App() {
 
   // 7. Active Job Session State
   const [activeSession, setActiveSession] = useState<ActiveJobSession | null>(() => {
-    try {
-      const saved = safeStorage.getItem(STORAGE_KEYS.ACTIVE_SESSION);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed && parsed.job) {
-          return parsed;
-        }
+    const saved = localStorage.getItem(STORAGE_KEYS.ACTIVE_SESSION);
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch {
+        return null;
       }
-    } catch {}
+    }
     // Pre-populate with job-1 in progress step 3 to match prototype screenshot, or active
     return {
       job: INITIAL_INCOMING_JOBS[0],
@@ -148,12 +106,8 @@ export default function App() {
 
   // 8. Financial earnings state
   const [currentWeekTotal, setCurrentWeekTotal] = useState<number>(() => {
-    try {
-      const saved = safeStorage.getItem(STORAGE_KEYS.WEEK_EARNINGS);
-      return saved ? parseInt(saved, 10) : 8450;
-    } catch {
-      return 8450;
-    }
+    const saved = localStorage.getItem(STORAGE_KEYS.WEEK_EARNINGS);
+    return saved ? parseInt(saved, 10) : 8450;
   });
 
   // 9. Toast Notification Message
@@ -161,35 +115,35 @@ export default function App() {
 
   // Persistence effects
   useEffect(() => {
-    safeStorage.setItem(STORAGE_KEYS.IS_LOGGED_IN, String(isLoggedIn));
+    localStorage.setItem(STORAGE_KEYS.IS_LOGGED_IN, String(isLoggedIn));
   }, [isLoggedIn]);
 
   useEffect(() => {
-    safeStorage.setItem(STORAGE_KEYS.IS_ONLINE, String(isOnline));
+    localStorage.setItem(STORAGE_KEYS.IS_ONLINE, String(isOnline));
   }, [isOnline]);
 
   useEffect(() => {
-    safeStorage.setItem(STORAGE_KEYS.CURRENT_SCREEN, currentScreen);
+    localStorage.setItem(STORAGE_KEYS.CURRENT_SCREEN, currentScreen);
   }, [currentScreen]);
 
   useEffect(() => {
-    safeStorage.setItem(STORAGE_KEYS.INCOMING_JOBS, JSON.stringify(incomingJobs));
+    localStorage.setItem(STORAGE_KEYS.INCOMING_JOBS, JSON.stringify(incomingJobs));
   }, [incomingJobs]);
 
   useEffect(() => {
     if (activeSession) {
-      safeStorage.setItem(STORAGE_KEYS.ACTIVE_SESSION, JSON.stringify(activeSession));
+      localStorage.setItem(STORAGE_KEYS.ACTIVE_SESSION, JSON.stringify(activeSession));
     } else {
-      safeStorage.removeItem(STORAGE_KEYS.ACTIVE_SESSION);
+      localStorage.removeItem(STORAGE_KEYS.ACTIVE_SESSION);
     }
   }, [activeSession]);
 
   useEffect(() => {
-    safeStorage.setItem(STORAGE_KEYS.WORKER_PROFILE, JSON.stringify(worker));
+    localStorage.setItem(STORAGE_KEYS.WORKER_PROFILE, JSON.stringify(worker));
   }, [worker]);
 
   useEffect(() => {
-    safeStorage.setItem(STORAGE_KEYS.WEEK_EARNINGS, String(currentWeekTotal));
+    localStorage.setItem(STORAGE_KEYS.WEEK_EARNINGS, String(currentWeekTotal));
   }, [currentWeekTotal]);
 
   const showToast = (message: string) => {
@@ -361,27 +315,13 @@ export default function App() {
           />
         )}
 
-        {currentScreen === 'job_detail' && (
-          selectedJob ? (
-            <JobDetailScreen
-              job={selectedJob}
-              onBack={() => setCurrentScreen('dashboard')}
-              onAccept={handleAcceptJob}
-              onReject={handleRejectJob}
-            />
-          ) : (
-            <DashboardScreen
-              worker={worker}
-              isOnline={isOnline}
-              onToggleOnline={handleToggleOnline}
-              incomingJobs={incomingJobs}
-              onAcceptJob={handleAcceptJob}
-              onRejectJob={handleRejectJob}
-              onViewJobDetail={handleViewJobDetail}
-              onNavigateToActive={() => setCurrentScreen('active_job')}
-              hasActiveJob={!!activeSession}
-            />
-          )
+        {currentScreen === 'job_detail' && selectedJob && (
+          <JobDetailScreen
+            job={selectedJob}
+            onBack={() => setCurrentScreen('dashboard')}
+            onAccept={handleAcceptJob}
+            onReject={handleRejectJob}
+          />
         )}
 
         {currentScreen === 'active_job' && (

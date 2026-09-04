@@ -76,7 +76,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                 onClick={onViewReviews}
                 className="text-[#1F4D3D] font-[600] hover:underline"
               >
-                Rating: {(worker?.rating ?? 4.92).toFixed(2)} ({worker?.reviewCount ?? 214} reviews)
+                Rating: {worker.rating.toFixed(2)} ({worker.reviewCount} reviews)
               </button>
             </div>
           </div>
@@ -134,7 +134,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             <div className="flex items-center justify-between mb-1.5">
               <span className="text-[13px] font-[600] text-[#14181F]">Operational Radius</span>
               <span className="px-2 py-0.5 rounded-[8px] bg-[#FFFFFF] border border-[#E7E5E1] text-[#14181F] text-[11px] font-[600] tabular-nums">
-                {(radius ?? 6.0).toFixed(1)} KM
+                {radius.toFixed(1)} KM
               </span>
             </div>
             <p className="text-[12px] text-[#6B7280] leading-relaxed mb-2.5">
