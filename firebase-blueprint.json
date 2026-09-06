@@ -1,0 +1,63 @@
+{
+  "entities": {
+    "Booking": {
+      "title": "Booking",
+      "description": "A service booking between a citizen and a cooperative worker",
+      "type": "object",
+      "properties": {
+        "workerId": {
+          "type": "string",
+          "description": "ID of the assigned worker, e.g. worker-1"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["requested", "accepted", "in_progress", "completed", "cancelled", "rejected"],
+          "description": "Lifecycle state of the booking"
+        },
+        "title": {
+          "type": "string",
+          "description": "Service title or description summary"
+        },
+        "category": {
+          "type": "string",
+          "description": "Trade category of the booking"
+        },
+        "urgency": {
+          "type": "string",
+          "description": "Priority or scheduling urgency"
+        },
+        "customerName": {
+          "type": "string",
+          "description": "Name of the requesting citizen"
+        },
+        "customerPhone": {
+          "type": "string",
+          "description": "Phone number of the requesting citizen"
+        },
+        "address": {
+          "type": "string",
+          "description": "Physical site address"
+        },
+        "area": {
+          "type": "string",
+          "description": "Locality or sector name"
+        },
+        "price": {
+          "type": "number",
+          "description": "Tariff amount in INR"
+        },
+        "description": {
+          "type": "string",
+          "description": "Detailed problem description"
+        }
+      },
+      "required": ["workerId", "status"]
+    }
+  },
+  "firestore": {
+    "/bookings/{bookingId}": {
+      "schema": "Booking",
+      "description": "Collection of citizen service bookings dispatched to cooperative workers"
+    }
+  }
+}

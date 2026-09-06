@@ -18,6 +18,11 @@ import {
   SETTLEMENT_HISTORY, 
   CUSTOMER_REVIEWS 
 } from './data/initialData';
+import { 
+  subscribeToIncomingBookings, 
+  updateBookingStatus, 
+  testConnection 
+} from './lib/bookingService';
 import { Header } from './components/Header';
 import { BottomNav } from './components/BottomNav';
 import { Footer } from './components/Footer';
@@ -34,7 +39,6 @@ const STORAGE_KEYS = {
   IS_LOGGED_IN: 'sahyog_worker_logged_in',
   IS_ONLINE: 'sahyog_worker_online',
   CURRENT_SCREEN: 'sahyog_worker_screen',
-  INCOMING_JOBS: 'sahyog_worker_incoming_jobs',
   ACTIVE_SESSION: 'sahyog_worker_active_session',
   WORKER_PROFILE: 'sahyog_worker_profile',
   WEEK_EARNINGS: 'sahyog_worker_week_earnings'
@@ -67,11 +71,8 @@ export default function App() {
     return saved ? JSON.parse(saved) : INITIAL_WORKER;
   });
 
-  // 5. Incoming Job Requests Queue
-  const [incomingJobs, setIncomingJobs] = useState<JobRequest[]>(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.INCOMING_JOBS);
-    return saved ? JSON.parse(saved) : INITIAL_INCOMING_JOBS;
-  });
+  // 5. Incoming Job Requests Queue (Live-subscribed from Firestore 'bookings' collection)
+  const [incomingJobs, setIncomingJobs] = useState<JobRequest[]>([]);
 
   // 6. Selected Job for Detail View
   const [selectedJob, setSelectedJob] = useState<JobRequest | null>(null);
@@ -126,9 +127,29 @@ export default function App() {
     localStorage.setItem(STORAGE_KEYS.CURRENT_SCREEN, currentScreen);
   }, [currentScreen]);
 
+  // Test initial Firestore connection
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.INCOMING_JOBS, JSON.stringify(incomingJobs));
-  }, [incomingJobs]);
+    testConnection();
+  }, []);
+
+  // 1. Live subscription to Firestore "bookings" collection
+  // Filtered where workerId equals this worker's own id AND status equals "requested"
+  useEffect(() => {
+    if (!worker?.id) return;
+    const unsubscribe = subscribeToIncomingBookings(
+      worker.id,
+      (jobs) => {
+        setIncomingJobs(jobs);
+      },
+      (error) => {
+        console.error('Error live-subscribing to incoming bookings:', error);
+      }
+    );
+
+    return () => {
+      unsubscribe();
+    };
+  }, [worker.id]);
 
   useEffect(() => {
     if (activeSession) {
@@ -165,13 +186,21 @@ export default function App() {
   };
 
   // Job Actions
-  const handleAcceptJob = (job: JobRequest) => {
-    // Remove from queue
+  // 2. When the worker accepts a job, update that booking's status in Firestore to "accepted"
+  const handleAcceptJob = async (job: JobRequest) => {
+    // Persist accepted status to Firestore
+    try {
+      await updateBookingStatus(job.id, 'accepted');
+    } catch (err) {
+      console.error('Failed to update booking status to accepted in Firestore:', err);
+    }
+
+    // Remove from local queue
     setIncomingJobs((prev) => prev.filter((j) => j.id !== job.id));
 
     // Create active session
     const newSession: ActiveJobSession = {
-      job,
+      job: { ...job, status: 'accepted' },
       currentStep: 1, // On the way
       startedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       stepTimestamps: {
@@ -191,7 +220,15 @@ export default function App() {
     showToast(`Accepted: ${job.title}. Switched to Active job.`);
   };
 
-  const handleRejectJob = (jobId: string) => {
+  // 3. When the worker rejects a job, update status to "rejected"
+  const handleRejectJob = async (jobId: string) => {
+    // Persist rejected status to Firestore
+    try {
+      await updateBookingStatus(jobId, 'rejected');
+    } catch (err) {
+      console.error('Failed to update booking status to rejected in Firestore:', err);
+    }
+
     setIncomingJobs((prev) => prev.filter((j) => j.id !== jobId));
     if (selectedJob?.id === jobId) {
       setSelectedJob(null);
@@ -206,8 +243,9 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Stepper Advance in Active Job
-  const handleAdvanceStep = () => {
+  // 4. As the worker advances through job steps (arrived → started → completed),
+  // update the booking's status in Firestore to "in_progress" when work starts, and "completed" when finished.
+  const handleAdvanceStep = async () => {
     if (!activeSession) return;
     const nextStep = (activeSession.currentStep + 1) as StepState;
 
@@ -218,10 +256,32 @@ export default function App() {
       if (nextStep === 3) updatedTimestamps.startedAt = now;
       if (nextStep === 4) updatedTimestamps.completedAt = now;
 
+      // Firestore persistence:
+      // "in_progress" when work starts (step 3)
+      if (nextStep === 3) {
+        try {
+          await updateBookingStatus(activeSession.job.id, 'in_progress');
+        } catch (err) {
+          console.error('Failed to update booking status to in_progress in Firestore:', err);
+        }
+      } 
+      // "completed" when finished (step 4)
+      else if (nextStep === 4) {
+        try {
+          await updateBookingStatus(activeSession.job.id, 'completed');
+        } catch (err) {
+          console.error('Failed to update booking status to completed in Firestore:', err);
+        }
+      }
+
       setActiveSession({
         ...activeSession,
         currentStep: nextStep,
-        stepTimestamps: updatedTimestamps
+        stepTimestamps: updatedTimestamps,
+        job: {
+          ...activeSession.job,
+          status: nextStep === 4 ? 'completed' : nextStep === 3 ? 'in_progress' : activeSession.job.status
+        }
       });
 
       if (nextStep === 4) {
@@ -243,7 +303,14 @@ export default function App() {
     }
   };
 
-  const handleCompleteActiveJob = () => {
+  const handleCompleteActiveJob = async () => {
+    if (activeSession?.job?.id) {
+      try {
+        await updateBookingStatus(activeSession.job.id, 'completed');
+      } catch (err) {
+        console.error('Failed to update booking status to completed in Firestore:', err);
+      }
+    }
     setActiveSession(null);
     setCurrentScreen('dashboard');
     showToast('Returned to job broadcast pool.');

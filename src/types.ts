@@ -38,7 +38,7 @@ export interface JobRequest {
   description: string;
   notes?: string;
   materialsProvided: boolean;
-  status: 'pending' | 'accepted' | 'rejected' | 'in_progress' | 'completed';
+  status: 'pending' | 'requested' | 'accepted' | 'rejected' | 'in_progress' | 'completed' | 'cancelled';
   timestamp: string;
 }
 
