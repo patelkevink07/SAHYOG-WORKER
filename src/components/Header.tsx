@@ -1,20 +1,22 @@
 import React, { useState } from 'react';
 import { SahyogLogo } from './SahyogLogo';
 import { WorkerProfile } from '../types';
-import { Bell, CheckCircle2, ShieldAlert, Star, X } from 'lucide-react';
+import { Bell, CheckCircle2, ShieldAlert, Star, X, ArrowLeftRight } from 'lucide-react';
 
 interface HeaderProps {
   worker: WorkerProfile;
   isOnline: boolean;
   onOpenReviews: () => void;
   onNavigateHome: () => void;
+  onSwitchWorker?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
   worker,
   isOnline,
   onOpenReviews,
-  onNavigateHome
+  onNavigateHome,
+  onSwitchWorker
 }) => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [hasUnread, setHasUnread] = useState(true);
@@ -47,39 +49,53 @@ export const Header: React.FC<HeaderProps> = ({
     <>
       <header 
         id="app-top-header" 
-        className="sticky top-0 z-40 bg-[#FFFFFF] border-b border-[#E7E5E1] transition-colors"
+        className="sticky top-0 z-30 bg-[#FFFFFF] border-b border-[#E7E5E1] transition-colors"
       >
-        <div className="max-w-[72rem] mx-auto px-4 md:px-6 h-16 flex items-center justify-between">
-          {/* Logo & Identity */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-10 h-16 flex items-center justify-between">
+          {/* Logo & Identity (Responsive: full badge on mobile, contextual breadcrumb/partner mark on desktop) */}
           <button
             onClick={onNavigateHome}
-            className="flex items-center gap-3 text-left focus:outline-hidden focus:ring-2 focus:ring-[#1F4D3D] focus:ring-offset-2 rounded-[8px] p-1 -ml-1 transition-colors"
+            className="flex items-center gap-2.5 sm:gap-3 text-left focus:outline-hidden focus:ring-2 focus:ring-[#1F4D3D] focus:ring-offset-2 rounded-[8px] p-1 -ml-1 transition-colors"
             aria-label="Sahyog Worker Home"
           >
-            <SahyogLogo size="sm" />
-            <div className="flex flex-col">
+            <SahyogLogo size="sm" variant="badge" />
+            <div className="flex flex-col justify-center">
               <div className="flex items-center gap-1.5">
-                <span className="text-[17px] font-[650] text-[#14181F] leading-tight tracking-tight">
-                  Sahyog Partner
+                <span className="text-[13px] sm:text-[14px] md:text-[15px] font-[700] tracking-tight text-[#1F4D3D]">
+                  Partner Terminal
                 </span>
-                <span className="text-[10px] uppercase font-semibold px-1.5 py-0.5 rounded-[4px] bg-[#E7E5E1]/60 text-[#14181F]/80">
+                <span className="text-[10px] uppercase font-semibold px-1.5 py-0.5 rounded-[4px] bg-[#E7E5E1]/70 text-[#14181F]/80">
                   SIH26089
                 </span>
               </div>
-              <span className="text-[12px] font-[500] text-[#6B7280] leading-snug flex items-center gap-1 truncate max-w-[200px] sm:max-w-xs">
-                {worker.name} · {worker.federationName}
+              <span className="text-[11.5px] sm:text-[12px] font-[500] text-[#6B7280] leading-tight truncate max-w-[130px] xs:max-w-[180px] sm:max-w-xs md:max-w-sm">
+                {worker.name} · {worker.trade}
               </span>
             </div>
           </button>
 
-          {/* Quick Actions: Ratings view + Notifications */}
-          <div className="flex items-center gap-1.5">
+          {/* Quick Actions: Switch Worker + Ratings view + Notifications */}
+          <div className="flex items-center gap-1.5 md:gap-2.5">
+            {onSwitchWorker && (
+              <button
+                id="header-switch-worker-btn"
+                type="button"
+                onClick={onSwitchWorker}
+                title="Switch Worker Persona (Demo)"
+                className="inline-flex items-center gap-1.5 px-2.5 md:px-3 py-1.5 text-[12px] font-semibold text-[#1F4D3D] bg-[#F4F9F6] hover:bg-[#E8F3EE] border border-[#C5DDD2] rounded-[8px] transition-colors focus:outline-hidden focus:ring-2 focus:ring-[#1F4D3D]"
+              >
+                <ArrowLeftRight className="w-3.5 h-3.5 text-[#1F4D3D]" />
+                <span className="hidden xs:inline sm:inline">Switch Worker</span>
+                <span className="inline xs:hidden sm:hidden">Switch</span>
+              </button>
+            )}
+
             {/* Quick Ratings & Reviews link button */}
             <button
               id="header-reviews-btn"
               onClick={onOpenReviews}
               title="View Customer Reviews & Ratings"
-              className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1.5 text-[12px] font-medium text-[#14181F] hover:bg-[#FAFAF9] border border-[#E7E5E1] rounded-[8px] transition-colors focus:outline-hidden focus:ring-2 focus:ring-[#1F4D3D]"
+              className="hidden sm:inline-flex items-center gap-1.5 px-2.5 md:px-3 py-1.5 text-[12px] font-medium text-[#14181F] hover:bg-[#FAFAF9] border border-[#E7E5E1] rounded-[8px] transition-colors focus:outline-hidden focus:ring-2 focus:ring-[#1F4D3D]"
             >
               <Star className="w-3.5 h-3.5 fill-[#C9A227] text-[#C9A227]" />
               <span className="tabular-nums font-semibold">{worker.rating.toFixed(2)}</span>
@@ -112,7 +128,7 @@ export const Header: React.FC<HeaderProps> = ({
           onClick={() => setShowNotifications(false)}
         >
           <div 
-            className="w-full max-w-sm bg-[#FFFFFF] h-full shadow-2xl flex flex-col border-l border-[#E7E5E1]"
+            className="w-full max-w-sm md:max-w-md bg-[#FFFFFF] h-full shadow-2xl flex flex-col border-l border-[#E7E5E1]"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="p-4 border-b border-[#E7E5E1] flex items-center justify-between">

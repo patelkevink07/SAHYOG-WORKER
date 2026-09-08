@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { CustomerReview, WorkerProfile } from '../types';
 import { Star, ArrowLeft, ShieldCheck, ThumbsUp } from 'lucide-react';
+import { getWorkerReviews } from '../lib/workerService';
 
 interface ReviewsScreenProps {
   worker: WorkerProfile;
@@ -10,9 +11,25 @@ interface ReviewsScreenProps {
 
 export const ReviewsScreen: React.FC<ReviewsScreenProps> = ({
   worker,
-  reviews,
+  reviews: fallbackReviews,
   onBack
 }) => {
+  const [reviewsList, setReviewsList] = useState<CustomerReview[]>(fallbackReviews);
+
+  useEffect(() => {
+    let isMounted = true;
+    getWorkerReviews(worker.id).then((customReviews) => {
+      if (isMounted && customReviews && customReviews.length > 0) {
+        setReviewsList(customReviews);
+      } else if (isMounted) {
+        setReviewsList(fallbackReviews);
+      }
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, [worker.id, fallbackReviews]);
+
   const topPraiseTags = [
     { label: 'Prompt Arrival', count: 184 },
     { label: 'Fair Federation Tariff', count: 172 },
@@ -115,7 +132,7 @@ export const ReviewsScreen: React.FC<ReviewsScreenProps> = ({
           Recent Verified Reviews
         </h3>
 
-        {reviews.map((rev) => (
+        {reviewsList.map((rev) => (
           <article
             key={rev.id}
             className="bg-[#FFFFFF] border border-[#E7E5E1] rounded-[10px] p-4 sm:p-5 shadow-xs"

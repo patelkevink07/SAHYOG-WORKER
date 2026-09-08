@@ -185,11 +185,16 @@ export function subscribeToIncomingBookings(
  */
 export async function updateBookingStatus(
   bookingId: string,
-  status: 'accepted' | 'rejected' | 'in_progress' | 'completed' | 'cancelled'
+  status: 'accepted' | 'rejected' | 'in_progress' | 'completed' | 'cancelled',
+  extraFields?: Record<string, any>
 ): Promise<void> {
   const bookingRef = doc(db, 'bookings', bookingId);
   try {
-    await updateDoc(bookingRef, { status });
+    const payload: Record<string, any> = {
+      status,
+      ...(extraFields || {})
+    };
+    await updateDoc(bookingRef, payload);
   } catch (error) {
     handleFirestoreError(error, OperationType.UPDATE, `bookings/${bookingId}`);
     throw error;

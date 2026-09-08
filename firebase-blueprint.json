@@ -1,5 +1,24 @@
 {
   "entities": {
+    "Worker": {
+      "title": "Worker",
+      "description": "A cooperative worker profile",
+      "type": "object",
+      "properties": {
+        "isOnline": {
+          "type": "boolean",
+          "description": "Live duty availability status of the worker on citizen apps"
+        },
+        "name": {
+          "type": "string",
+          "description": "Full name of the worker"
+        },
+        "trade": {
+          "type": "string",
+          "description": "Primary trade of the worker"
+        }
+      }
+    },
     "Booking": {
       "title": "Booking",
       "description": "A service booking between a citizen and a cooperative worker",
@@ -55,6 +74,10 @@
     }
   },
   "firestore": {
+    "/workers/{workerId}": {
+      "schema": "Worker",
+      "description": "Collection of trade workers with their live duty status and profiles"
+    },
     "/bookings/{bookingId}": {
       "schema": "Booking",
       "description": "Collection of citizen service bookings dispatched to cooperative workers"

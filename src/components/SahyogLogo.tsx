@@ -1,56 +1,59 @@
 import React from 'react';
+import sahyogLogo from '../sahyog-logo.png';
+
+export { sahyogLogo };
 
 interface SahyogLogoProps {
   className?: string;
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'md' | 'lg' | 'xl';
+  variant?: 'inline' | 'card' | 'badge';
+  alt?: string;
 }
 
-export const SahyogLogo: React.FC<SahyogLogoProps> = ({ className = '', size = 'md' }) => {
-  const dimensions = {
-    sm: { width: 36, height: 36 },
-    md: { width: 44, height: 44 },
-    lg: { width: 56, height: 56 }
+export const SahyogLogo: React.FC<SahyogLogoProps> = ({ 
+  className = '', 
+  size = 'md',
+  variant = 'badge',
+  alt = 'Sahyog Cooperative Logo'
+}) => {
+  // Height & container proportions maintaining natural 1.8:1 aspect ratio without stretching
+  const sizeConfig = {
+    sm: {
+      imgClass: 'h-8 sm:h-9 max-w-[140px]',
+      containerClass: 'p-1 px-2 min-h-[36px]'
+    },
+    md: {
+      imgClass: 'h-10 sm:h-12 max-w-[190px]',
+      containerClass: 'p-1.5 px-3 min-h-[44px]'
+    },
+    lg: {
+      imgClass: 'h-16 sm:h-20 max-w-[260px]',
+      containerClass: 'p-2.5 px-4 min-h-[72px]'
+    },
+    xl: {
+      imgClass: 'h-24 sm:h-28 max-w-[340px]',
+      containerClass: 'p-3.5 px-5 min-h-[100px]'
+    }
   }[size];
+
+  // Guaranteed light/white surface backing for black line art
+  const surfaceClass = variant === 'inline' 
+    ? 'bg-[#FFFFFF] rounded-[8px]'
+    : 'bg-[#FFFFFF] border border-[#E7E5E1] rounded-[10px] shadow-2xs';
 
   return (
     <div 
-      className={`inline-flex items-center justify-center rounded-lg bg-[#1F4D3D] text-[#FAFAF9] p-1.5 select-none shadow-xs ${className}`}
-      style={{ width: dimensions.width, height: dimensions.height }}
-      aria-label="Sahyog Cooperative Logo"
+      className={`inline-flex items-center justify-center select-none ${surfaceClass} ${sizeConfig.containerClass} ${className}`}
+      aria-label={alt}
     >
-      <svg
-        viewBox="0 0 64 64"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        className="w-full h-full"
-      >
-        {/* Cooperative Reaching Hands Vector */}
-        {/* Left hand reaching forward */}
-        <path
-          d="M 12 34 C 18 31, 24 29, 30 31 C 32 31.5, 35 34, 37 34 C 38.5 34, 39.5 33, 40 31.5 C 38 29.5, 34 29, 30 28 C 24 26.5, 18 29, 12 34 Z"
-          fill="currentColor"
-          opacity="0.95"
-        />
-        {/* Left thumb & fingers line */}
-        <path
-          d="M 14 30 C 20 25, 27 23, 34 26 C 37 27.5, 41 27.5, 44 26.5 C 43 25, 39 24.5, 35 24 C 29 23, 21 25, 14 30 Z"
-          fill="currentColor"
-          opacity="0.9"
-        />
-        {/* Right hand supporting from below */}
-        <path
-          d="M 52 32 C 46 35, 40 37, 34 35 C 32 34.5, 29 32, 27 32 C 25.5 32, 24.5 33, 24 34.5 C 26 36.5, 30 37, 34 38 C 40 39.5, 46 37, 52 32 Z"
-          fill="currentColor"
-          opacity="0.95"
-        />
-        <path
-          d="M 50 36 C 44 41, 37 43, 30 40 C 27 38.5, 23 38.5, 20 39.5 C 21 41, 25 41.5, 29 42 C 35 43, 43 41, 50 36 Z"
-          fill="currentColor"
-          opacity="0.9"
-        />
-        {/* Center mutual handshake knot / bond */}
-        <circle cx="32" cy="33" r="2.5" fill="#C9A227" />
-      </svg>
+      <img
+        src={sahyogLogo}
+        alt={alt}
+        className={`${sizeConfig.imgClass} w-auto object-contain block`}
+        style={{ aspectRatio: '1142 / 633' }}
+        loading="eager"
+        decoding="async"
+      />
     </div>
   );
 };

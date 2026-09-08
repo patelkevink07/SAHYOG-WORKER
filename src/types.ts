@@ -1,5 +1,6 @@
 export type ScreenType = 
   | 'login'
+  | 'worker_select'
   | 'dashboard'
   | 'job_detail'
   | 'active_job'
@@ -90,6 +91,11 @@ export interface WorkerProfile {
   ncctStanding: 'GOOD STANDING' | 'CONDITIONAL' | 'IN REVIEW';
   ncctDetails: string;
   skills: string[];
+  photoUrl?: string;
+  summary?: string;
+  hourlyRate?: number;
+  primaryServiceId?: string;
+  isOnline?: boolean;
 }
 
 export interface WelfareBenefit {

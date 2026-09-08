@@ -63,12 +63,12 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
       <div className="w-full max-w-sm">
         {/* Brand mark */}
         <div className="flex flex-col items-center text-center mb-6">
-          <SahyogLogo size="lg" />
-          <h1 className="text-[22px] font-[650] text-[#14181F] mt-3 tracking-tight">
-            Sahyog Worker
+          <SahyogLogo size="lg" variant="card" />
+          <h1 className="text-[20px] sm:text-[22px] font-[650] text-[#14181F] mt-3.5 tracking-tight">
+            Worker Partner Portal
           </h1>
           <p className="text-[13px] font-[400] text-[#6B7280] mt-0.5">
-            Cooperative Partner Portal · SIH26089
+            National Cooperative Mesh · SIH26089
           </p>
         </div>
 

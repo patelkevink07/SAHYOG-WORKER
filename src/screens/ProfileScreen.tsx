@@ -10,7 +10,8 @@ import {
   LogOut, 
   MapPin, 
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  ArrowLeftRight
 } from 'lucide-react';
 
 interface ProfileScreenProps {
@@ -18,13 +19,15 @@ interface ProfileScreenProps {
   onUpdateRadius: (radius: number) => void;
   onLogout: () => void;
   onViewReviews: () => void;
+  onSwitchWorker?: () => void;
 }
 
 export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   worker,
   onUpdateRadius,
   onLogout,
-  onViewReviews
+  onViewReviews,
+  onSwitchWorker
 }) => {
   const [radius, setRadius] = useState(worker.operationalRadiusKm);
   const [showRadiusSaved, setShowRadiusSaved] = useState(false);
@@ -233,8 +236,20 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
         </a>
       </div>
 
-      {/* Logout Action */}
-      <div className="pt-2">
+      {/* Switch Worker Persona & Logout Actions */}
+      <div className="pt-2 space-y-2.5">
+        {onSwitchWorker && (
+          <button
+            type="button"
+            id="profile-switch-worker-btn"
+            onClick={onSwitchWorker}
+            className="w-full min-h-[48px] h-12 bg-[#1F4D3D] hover:bg-[#173C2F] text-[#FFFFFF] font-[600] text-[14px] rounded-[8px] flex items-center justify-center gap-2 transition-colors focus:outline-hidden focus:ring-2 focus:ring-[#1F4D3D] shadow-xs"
+          >
+            <ArrowLeftRight className="w-4 h-4 text-[#A1D1BC]" />
+            <span>Switch Worker Persona (Demo Registry)</span>
+          </button>
+        )}
+
         <button
           type="button"
           id="profile-logout-btn"
@@ -242,7 +257,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
           className="w-full min-h-[48px] h-12 border border-[#E7E5E1] bg-[#FFFFFF] hover:bg-[#FAFAF9] text-[#991B1B] font-[600] text-[14px] rounded-[8px] flex items-center justify-center gap-2 transition-colors"
         >
           <LogOut className="w-4 h-4" />
-          <span>Log Out of Session</span>
+          <span>Switch Worker / Logout</span>
         </button>
       </div>
     </div>

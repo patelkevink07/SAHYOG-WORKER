@@ -23,10 +23,17 @@ import {
   updateBookingStatus, 
   testConnection 
 } from './lib/bookingService';
+import {
+  getWorkerOnlineStatus,
+  updateWorkerOnlineStatus,
+  subscribeToWorkerOnlineStatus
+} from './lib/workerService';
 import { Header } from './components/Header';
 import { BottomNav } from './components/BottomNav';
 import { Footer } from './components/Footer';
 import { LoginScreen } from './screens/LoginScreen';
+import { WorkerSelectionScreen } from './screens/WorkerSelectionScreen';
+import { SplashScreen } from './screens/SplashScreen';
 import { DashboardScreen } from './screens/DashboardScreen';
 import { JobDetailScreen } from './screens/JobDetailScreen';
 import { ActiveJobScreen } from './screens/ActiveJobScreen';
@@ -45,6 +52,13 @@ const STORAGE_KEYS = {
 };
 
 export default function App() {
+  // 0. App Launch Splash Screen
+  const [showSplash, setShowSplash] = useState<boolean>(() => {
+    // Show splash on fresh initial page load
+    const seen = sessionStorage.getItem('sahyog_splash_seen');
+    return seen !== 'true';
+  });
+
   // 1. Authentication State
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => {
     const saved = localStorage.getItem(STORAGE_KEYS.IS_LOGGED_IN);
@@ -60,7 +74,7 @@ export default function App() {
   // 3. Navigation State
   const [currentScreen, setCurrentScreen] = useState<ScreenType>(() => {
     const saved = localStorage.getItem(STORAGE_KEYS.CURRENT_SCREEN) as ScreenType;
-    return (saved && ['dashboard', 'job_detail', 'active_job', 'earnings', 'profile', 'reviews'].includes(saved)) 
+    return (saved && ['dashboard', 'job_detail', 'active_job', 'earnings', 'profile', 'reviews', 'worker_select'].includes(saved)) 
       ? saved 
       : 'dashboard';
   });
@@ -151,6 +165,36 @@ export default function App() {
     };
   }, [worker.id]);
 
+  // Live sync of worker's isOnline duty status from the shared Firestore "workers" collection.
+  // On app load: if this worker's Firestore doc already has an isOnline value, use that as the initial toggle state.
+  useEffect(() => {
+    if (!worker?.id) return;
+    let isCancelled = false;
+
+    // Fetch initial isOnline status from Firestore document
+    getWorkerOnlineStatus(worker.id).then((remoteStatus) => {
+      if (!isCancelled && typeof remoteStatus === 'boolean') {
+        setIsOnline(remoteStatus);
+        localStorage.setItem(STORAGE_KEYS.IS_ONLINE, String(remoteStatus));
+      }
+    }).catch((err) => {
+      console.warn(`Could not read isOnline from Firestore for ${worker.id}:`, err);
+    });
+
+    // Also subscribe to real-time status updates for this worker doc
+    const unsubscribe = subscribeToWorkerOnlineStatus(worker.id, (remoteStatus) => {
+      if (!isCancelled && typeof remoteStatus === 'boolean') {
+        setIsOnline(remoteStatus);
+        localStorage.setItem(STORAGE_KEYS.IS_ONLINE, String(remoteStatus));
+      }
+    });
+
+    return () => {
+      isCancelled = true;
+      unsubscribe();
+    };
+  }, [worker.id]);
+
   useEffect(() => {
     if (activeSession) {
       localStorage.setItem(STORAGE_KEYS.ACTIVE_SESSION, JSON.stringify(activeSession));
@@ -174,14 +218,23 @@ export default function App() {
     }, 2800);
   };
 
-  // Availability Toggle Handler
-  const handleToggleOnline = () => {
+  // Availability Toggle Handler: writes new value to worker's doc in Firestore "workers" collection
+  const handleToggleOnline = async () => {
     const nextState = !isOnline;
     setIsOnline(nextState);
+    localStorage.setItem(STORAGE_KEYS.IS_ONLINE, String(nextState));
+
     if (nextState) {
-      showToast("You're online. Dispatch pool active.");
+      showToast("You're online · Status synced to registry.");
     } else {
-      showToast("You're offline. No incoming dispatches.");
+      showToast("You're offline · Status synced to registry.");
+    }
+
+    // Persist to shared Firestore "workers" collection (field name: isOnline, boolean)
+    try {
+      await updateWorkerOnlineStatus(worker.id, nextState);
+    } catch (err) {
+      console.error('Failed to sync isOnline status to Firestore:', err);
     }
   };
 
@@ -190,7 +243,7 @@ export default function App() {
   const handleAcceptJob = async (job: JobRequest) => {
     // Persist accepted status to Firestore
     try {
-      await updateBookingStatus(job.id, 'accepted');
+      await updateBookingStatus(job.id, 'accepted', { workerId: worker.id });
     } catch (err) {
       console.error('Failed to update booking status to accepted in Firestore:', err);
     }
@@ -224,7 +277,7 @@ export default function App() {
   const handleRejectJob = async (jobId: string) => {
     // Persist rejected status to Firestore
     try {
-      await updateBookingStatus(jobId, 'rejected');
+      await updateBookingStatus(jobId, 'rejected', { workerId: worker.id });
     } catch (err) {
       console.error('Failed to update booking status to rejected in Firestore:', err);
     }
@@ -260,7 +313,7 @@ export default function App() {
       // "in_progress" when work starts (step 3)
       if (nextStep === 3) {
         try {
-          await updateBookingStatus(activeSession.job.id, 'in_progress');
+          await updateBookingStatus(activeSession.job.id, 'in_progress', { workerId: worker.id });
         } catch (err) {
           console.error('Failed to update booking status to in_progress in Firestore:', err);
         }
@@ -268,7 +321,7 @@ export default function App() {
       // "completed" when finished (step 4)
       else if (nextStep === 4) {
         try {
-          await updateBookingStatus(activeSession.job.id, 'completed');
+          await updateBookingStatus(activeSession.job.id, 'completed', { workerId: worker.id });
         } catch (err) {
           console.error('Failed to update booking status to completed in Firestore:', err);
         }
@@ -306,7 +359,7 @@ export default function App() {
   const handleCompleteActiveJob = async () => {
     if (activeSession?.job?.id) {
       try {
-        await updateBookingStatus(activeSession.job.id, 'completed');
+        await updateBookingStatus(activeSession.job.id, 'completed', { workerId: worker.id });
       } catch (err) {
         console.error('Failed to update booking status to completed in Firestore:', err);
       }
@@ -334,24 +387,66 @@ export default function App() {
     showToast(`Operational radius updated to ${radius.toFixed(1)} km.`);
   };
 
-  const handleLogout = () => {
-    setIsLoggedIn(false);
-    showToast('Signed out of session.');
-  };
-
-  const handleLoginSuccess = () => {
+  // Switch persona to selected worker
+  const handleSelectWorker = (selectedWorker: WorkerProfile) => {
+    const isDifferent = selectedWorker.id !== worker.id;
+    setWorker(selectedWorker);
     setIsLoggedIn(true);
     setCurrentScreen('dashboard');
-    showToast(`Welcome, ${worker.name}. Duty ready.`);
+    if (isDifferent) {
+      setActiveSession(null);
+      setSelectedJob(null);
+      setIncomingJobs([]);
+      if (typeof selectedWorker.isOnline === 'boolean') {
+        setIsOnline(selectedWorker.isOnline);
+        localStorage.setItem(STORAGE_KEYS.IS_ONLINE, String(selectedWorker.isOnline));
+      }
+    }
+    showToast(`Switched persona to ${selectedWorker.name} (${selectedWorker.trade}).`);
   };
 
-  // If not logged in, show Login Screen (minimal & fast)
-  if (!isLoggedIn) {
-    return <LoginScreen onLoginSuccess={handleLoginSuccess} />;
+  // Open worker selection screen
+  const handleOpenWorkerSelect = () => {
+    setCurrentScreen('worker_select');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    setCurrentScreen('worker_select');
+    showToast('Signed out of session. Choose a worker persona.');
+  };
+
+  // 0. Initial App Launch Splash Screen
+  if (showSplash) {
+    return (
+      <SplashScreen
+        onComplete={() => {
+          setShowSplash(false);
+          sessionStorage.setItem('sahyog_splash_seen', 'true');
+        }}
+      />
+    );
+  }
+
+  // If not logged in or worker_select screen active, render lightweight WorkerSelectionScreen
+  if (!isLoggedIn || currentScreen === 'worker_select') {
+    return (
+      <WorkerSelectionScreen
+        currentWorkerId={worker?.id}
+        onSelectWorker={handleSelectWorker}
+        onCancel={() => {
+          if (isLoggedIn) {
+            setCurrentScreen('dashboard');
+          }
+        }}
+        canCancel={isLoggedIn && currentScreen === 'worker_select'}
+      />
+    );
   }
 
   return (
-    <div className="min-h-screen bg-[#FAFAF9] text-[#14181F] flex flex-col antialiased selection:bg-[#1F4D3D] selection:text-[#FFFFFF]">
+    <div className="min-h-screen bg-[#FAFAF9] text-[#14181F] flex flex-col md:pl-64 lg:pl-72 antialiased selection:bg-[#1F4D3D] selection:text-[#FFFFFF]">
       {/* Top Header */}
       <Header
         worker={worker}
@@ -364,10 +459,11 @@ export default function App() {
           setCurrentScreen('dashboard');
           window.scrollTo({ top: 0, behavior: 'smooth' });
         }}
+        onSwitchWorker={handleOpenWorkerSelect}
       />
 
-      {/* Main Container: Max 72rem fluid container with phone-first padding */}
-      <main className="flex-1 w-full max-w-[72rem] mx-auto px-4 md:px-6 pt-4 pb-20">
+      {/* Main Container: Wide, intentional responsive layout for desktop with proper spacing */}
+      <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-10 pt-4 md:pt-6 pb-20 md:pb-12">
         {currentScreen === 'dashboard' && (
           <DashboardScreen
             worker={worker}
@@ -416,6 +512,7 @@ export default function App() {
             onUpdateRadius={handleUpdateRadius}
             onLogout={handleLogout}
             onViewReviews={() => setCurrentScreen('reviews')}
+            onSwitchWorker={handleOpenWorkerSelect}
           />
         )}
 
@@ -431,7 +528,7 @@ export default function App() {
         <Footer />
       </main>
 
-      {/* Fixed Bottom Navigation (48px+ touch targets) */}
+      {/* Navigation: Mobile Bottom Nav + Desktop Persistent Left Sidebar */}
       <BottomNav
         currentScreen={currentScreen}
         hasActiveJob={!!activeSession}
@@ -439,15 +536,18 @@ export default function App() {
           setCurrentScreen(screen);
           window.scrollTo({ top: 0, behavior: 'smooth' });
         }}
+        worker={worker}
+        isOnline={isOnline}
+        onSwitchWorker={handleOpenWorkerSelect}
       />
 
-      {/* Factual Toast Notification */}
+      {/* Responsive Toast Notification */}
       {toastMessage && (
         <div 
           id="toast-banner"
           role="status"
           aria-live="polite"
-          className="fixed top-20 right-4 z-50 bg-[#14181F] text-[#FFFFFF] px-4 py-3 rounded-[8px] text-[13px] font-[500] shadow-lg flex items-center gap-2 max-w-sm border border-[#E7E5E1]/20 transition-all duration-200"
+          className="fixed top-20 md:top-6 right-4 md:right-8 z-50 bg-[#14181F] text-[#FFFFFF] px-4 py-3 md:px-5 md:py-3.5 rounded-[8px] md:rounded-[10px] text-[13px] md:text-[14px] font-[500] shadow-lg md:shadow-xl flex items-center gap-2.5 max-w-sm md:max-w-md border border-[#E7E5E1]/20 transition-all duration-200"
         >
           <CheckCircle2 className="w-4 h-4 text-[#A1D1BC] flex-shrink-0" />
           <span>{toastMessage}</span>
