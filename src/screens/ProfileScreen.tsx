@@ -62,16 +62,48 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                 {worker.name}
               </h2>
 
-              {/* EXACT VERIFICATION CHIP STYLE: Gold checkmark + "Verified · [Federation name]" in muted text */}
-              <span 
-                id="profile-verification-chip"
-                className="px-2.5 py-0.5 rounded-[8px] bg-[#FDF8E8] border border-[#F3E8B6] text-[#755B00] text-[12px] md:text-[13px] font-[600] inline-flex items-center gap-1.5"
-              >
-                <span className="w-4 h-4 rounded-full bg-[#C9A227] text-white flex items-center justify-center">
-                  <Check className="w-2.5 h-2.5 stroke-[3px]" />
+              {/* Status indicator chip */}
+              {worker.status === 'pending' && (
+                <span 
+                  id="profile-verification-chip"
+                  className="px-2.5 py-0.5 rounded-[8px] bg-[#FEF3C7] border border-[#FDE68A] text-[#92400E] text-[12px] md:text-[13px] font-[600] inline-flex items-center gap-1.5"
+                >
+                  <span className="w-2 h-2 rounded-full bg-[#D97706] animate-pulse" />
+                  <span>Review Pending · {worker.federationName}</span>
                 </span>
-                <span>Verified · {worker.federationName}</span>
-              </span>
+              )}
+
+              {worker.status === 'rejected' && (
+                <span 
+                  id="profile-verification-chip"
+                  className="px-2.5 py-0.5 rounded-[8px] bg-[#FEE2E2] border border-[#FECACA] text-[#991B1B] text-[12px] md:text-[13px] font-[600] inline-flex items-center gap-1.5"
+                >
+                  <span className="w-2 h-2 rounded-full bg-[#DC2626]" />
+                  <span>Not Approved · {worker.federationName}</span>
+                </span>
+              )}
+
+              {worker.status === 'held' && (
+                <span 
+                  id="profile-verification-chip"
+                  className="px-2.5 py-0.5 rounded-[8px] bg-[#F3F4F6] border border-[#E5E7EB] text-[#4B5563] text-[12px] md:text-[13px] font-[600] inline-flex items-center gap-1.5"
+                >
+                  <span className="w-2 h-2 rounded-full bg-[#6B7280]" />
+                  <span>Temporarily Held · {worker.federationName}</span>
+                </span>
+              )}
+
+              {(!worker.status || worker.status === 'approved') && (
+                <span 
+                  id="profile-verification-chip"
+                  className="px-2.5 py-0.5 rounded-[8px] bg-[#FDF8E8] border border-[#F3E8B6] text-[#755B00] text-[12px] md:text-[13px] font-[600] inline-flex items-center gap-1.5"
+                >
+                  <span className="w-4 h-4 rounded-full bg-[#C9A227] text-white flex items-center justify-center">
+                    <Check className="w-2.5 h-2.5 stroke-[3px]" />
+                  </span>
+                  <span>Verified · {worker.federationName}</span>
+                </span>
+              )}
             </div>
 
             <p className="text-[14px] md:text-[15px] text-[#6B7280] mt-1 font-[400]">
@@ -87,7 +119,9 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                 onClick={onViewReviews}
                 className="text-[#1F4D3D] font-[600] hover:underline"
               >
-                Rating: {worker.rating.toFixed(2)} ({worker.reviewCount} reviews)
+                {worker.reviewCount > 0 
+                  ? `Rating: ${worker.rating.toFixed(2)} (${worker.reviewCount} reviews)`
+                  : 'New Partner · 0 Reviews'}
               </button>
             </div>
           </div>
@@ -211,17 +245,17 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
               <div className="py-2.5 flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
                   <CheckCircle2 className="w-4 h-4 text-[#15803D] flex-shrink-0" />
-                  <span className="font-[500] text-[#14181F]">Aadhaar Biometric KYC</span>
+                  <span className="font-[500] text-[#14181F]">Aadhaar Biometric Identity</span>
                 </div>
-                <span className="text-[11px] text-[#6B7280] font-mono">UIDAI Verified · Dec 2021</span>
+                <span className="text-[11px] text-[#6B7280] font-mono">{worker.aadhaarNumber || 'UIDAI Verified · 2021'}</span>
               </div>
 
               <div className="py-2.5 flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
                   <CheckCircle2 className="w-4 h-4 text-[#15803D] flex-shrink-0" />
-                  <span className="font-[500] text-[#14181F]">Labour Cooperative Trade Permit</span>
+                  <span className="font-[500] text-[#14181F]">Labour Cooperative Trade Reg.</span>
                 </div>
-                <span className="text-[11px] text-[#6B7280] font-mono">#DL-SHR-2021-998</span>
+                <span className="text-[11px] text-[#6B7280] font-mono">#{worker.memberId}</span>
               </div>
 
               <div className="py-2.5 flex items-center justify-between">
@@ -229,8 +263,18 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                   <CheckCircle2 className="w-4 h-4 text-[#15803D] flex-shrink-0" />
                   <span className="font-[500] text-[#14181F]">Bank Direct Settlement NEFT</span>
                 </div>
-                <span className="text-[11px] text-[#6B7280] font-mono">HDFC Bank ****4102</span>
+                <span className="text-[11px] text-[#6B7280] font-mono">{worker.bankAccount || 'HDFC Bank ****4102'}</span>
               </div>
+
+              {worker.panNumber && (
+                <div className="py-2.5 flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <CheckCircle2 className="w-4 h-4 text-[#15803D] flex-shrink-0" />
+                    <span className="font-[500] text-[#14181F]">Income Tax PAN</span>
+                  </div>
+                  <span className="text-[11px] text-[#6B7280] font-mono">{worker.panNumber}</span>
+                </div>
+              )}
             </div>
           </div>
 
@@ -250,6 +294,25 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
               ))}
             </div>
           </div>
+
+          {/* Tools & Equipment */}
+          {worker.toolsEquipped && worker.toolsEquipped.length > 0 && (
+            <div className="bg-[#FFFFFF] border border-[#E7E5E1] rounded-[10px] md:rounded-[12px] p-5 sm:p-6 shadow-xs">
+              <h3 className="text-[15px] md:text-[16px] font-[650] text-[#14181F] mb-3">
+                Equipped Tools & Gear
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                {worker.toolsEquipped.map((tool, i) => (
+                  <span
+                    key={i}
+                    className="px-2.5 py-1 bg-[#F4F9F6] border border-[#C5DDD2] text-[#1F4D3D] text-[12px] font-[500] rounded-[6px]"
+                  >
+                    {tool}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Switch Worker Persona & Logout Actions */}
           <div className="p-4 sm:p-5 rounded-[10px] md:rounded-[12px] bg-[#FFFFFF] border border-[#E7E5E1] space-y-2.5 shadow-xs">

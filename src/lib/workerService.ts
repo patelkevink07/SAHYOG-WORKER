@@ -1,6 +1,6 @@
-import { collection, onSnapshot, getDocs, doc, getDoc, setDoc } from 'firebase/firestore';
+import { collection, onSnapshot, getDocs, doc, getDoc, setDoc, addDoc, Unsubscribe } from 'firebase/firestore';
 import { db } from './firebase';
-import { WorkerProfile, CustomerReview } from '../types';
+import { WorkerProfile, CustomerReview, JobCategory, JOB_CATEGORY_LABELS } from '../types';
 import { handleFirestoreError, OperationType } from './bookingService';
 import { WORKER_PHOTO_BY_SERVICE } from './workerPhotos';
 
@@ -308,27 +308,60 @@ export function getInitials(name: string): string {
 
 // Convert Firestore worker document into WorkerProfile
 export function mapFirestoreWorkerDoc(id: string, data: Record<string, any>): WorkerProfile {
-  const fallback = DEFAULT_WORKERS.find(w => w.primaryServiceId === data.primaryServiceId) || DEFAULT_WORKERS[0];
+  const primaryServiceId = (data.primaryServiceId || 'general-repair') as JobCategory;
+  const fallback = DEFAULT_WORKERS.find(w => w.primaryServiceId === primaryServiceId) || DEFAULT_WORKERS[0];
+  const isDefaultWorker = DEFAULT_WORKERS.some(w => w.id === id);
 
   const name = data.name || fallback.name;
-  const trade = data.primaryServiceName || data.trade || fallback.trade;
-  const primaryServiceId = data.primaryServiceId || fallback.primaryServiceId;
-  const memberId = data.registrationNumber || data.memberId || fallback.memberId;
+  const trade = data.primaryServiceName || JOB_CATEGORY_LABELS[primaryServiceId] || data.trade || fallback.trade;
+  const memberId = data.registrationNumber || data.memberId || (isDefaultWorker ? fallback.memberId : `DSF-${id.slice(0, 8).toUpperCase()}`);
   const federationName = data.federationName || fallback.federationName;
-  const memberSinceYear = typeof data.memberSinceYear === 'number' ? data.memberSinceYear : fallback.memberSinceYear;
-  const rating = typeof data.rating === 'number' ? data.rating : fallback.rating;
-  const reviewCount = typeof data.reviewCount === 'number' ? data.reviewCount : fallback.reviewCount;
-  const completedJobsCount = typeof data.completedJobs === 'number' ? data.completedJobs : 
-    typeof data.completedJobsCount === 'number' ? data.completedJobsCount : fallback.completedJobsCount;
+  const memberSinceYear = typeof data.memberSinceYear === 'number' 
+    ? data.memberSinceYear 
+    : (isDefaultWorker ? fallback.memberSinceYear : 2026);
+  
+  // Rating and review count: Default seed workers have initial reviews; new/custom workers start at 0
+  const rating = typeof data.rating === 'number' 
+    ? data.rating 
+    : (isDefaultWorker ? fallback.rating : 0);
+  const reviewCount = typeof data.reviewCount === 'number' 
+    ? data.reviewCount 
+    : (isDefaultWorker ? fallback.reviewCount : 0);
+  
+  // Completed jobs: If data specifies it, use it. If it's a seed worker, use fallback; otherwise strictly 0
+  const completedJobsCount = typeof data.completedJobsCount === 'number' 
+    ? data.completedJobsCount 
+    : typeof data.completedJobs === 'number' 
+    ? data.completedJobs 
+    : (isDefaultWorker ? fallback.completedJobsCount : 0);
 
   const skills: string[] = Array.isArray(data.subservices) && data.subservices.length > 0 
     ? data.subservices 
     : (Array.isArray(data.skills) && data.skills.length > 0 ? data.skills : fallback.skills);
 
-  const photoUrl = WORKER_PHOTO_BY_SERVICE[primaryServiceId] || fallback.photoUrl;
+  const photoUrl = data.photoUrl || WORKER_PHOTO_BY_SERVICE[primaryServiceId] || fallback.photoUrl;
   const summary = data.summary || fallback.summary;
   const hourlyRate = typeof data.hourlyRate === 'number' ? data.hourlyRate : fallback.hourlyRate;
-  const isOnline = typeof data.isOnline === 'boolean' ? data.isOnline : undefined;
+  const isOnline = typeof data.isOnline === 'boolean' ? data.isOnline : false;
+  const status = data.status as WorkerProfile['status'];
+  const rejectionReason = data.rejectionReason as string | undefined;
+
+  // Daily shift jobs completed and today payout: strictly 0 for new workers unless explicitly set
+  const dailyJobsCompleted = typeof data.dailyJobsCompleted === 'number'
+    ? data.dailyJobsCompleted
+    : (isDefaultWorker ? fallback.dailyJobsCompleted : 0);
+
+  const todayPayout = typeof data.todayPayout === 'number'
+    ? data.todayPayout
+    : (isDefaultWorker ? fallback.todayPayout : 0);
+
+  const acceptanceRate = typeof data.acceptanceRate === 'number'
+    ? data.acceptanceRate
+    : (isDefaultWorker ? fallback.acceptanceRate : 100);
+
+  const dailyJobCap = typeof data.dailyJobCap === 'number'
+    ? data.dailyJobCap
+    : (isDefaultWorker ? fallback.dailyJobCap : 4);
 
   return {
     id,
@@ -346,23 +379,32 @@ export function mapFirestoreWorkerDoc(id: string, data: Record<string, any>): Wo
     rating,
     reviewCount,
     completedJobsCount,
-    acceptanceRate: typeof data.acceptanceRate === 'number' ? data.acceptanceRate : fallback.acceptanceRate,
-    dailyJobCap: typeof data.dailyJobCap === 'number' ? data.dailyJobCap : fallback.dailyJobCap,
-    dailyJobsCompleted: typeof data.dailyJobsCompleted === 'number' ? data.dailyJobsCompleted : fallback.dailyJobsCompleted,
-    todayPayout: typeof data.todayPayout === 'number' ? data.todayPayout : fallback.todayPayout,
-    policeVerificationStatus: data.policeVerified === true ? 'CLEARED' : (data.policeVerificationStatus || fallback.policeVerificationStatus),
-    policeVerificationDetails: data.policeVerificationDetails || fallback.policeVerificationDetails,
+    acceptanceRate,
+    dailyJobCap,
+    dailyJobsCompleted,
+    todayPayout,
+    policeVerificationStatus: data.policeVerified === true ? 'CLEARED' : (status === 'pending' ? 'PENDING' : (data.policeVerificationStatus || (isDefaultWorker ? fallback.policeVerificationStatus : 'PENDING'))),
+    policeVerificationDetails: data.policeVerificationDetails || (status === 'pending' ? 'Pending verification by Police Central Registry.' : (isDefaultWorker ? fallback.policeVerificationDetails : 'Police verification in progress.')),
     skillCertificationDetails: Array.isArray(data.certifications) && data.certifications.length > 0
       ? data.certifications.join(' · ')
       : fallback.skillCertificationDetails,
-    ncctStanding: data.ncctStanding || fallback.ncctStanding,
-    ncctDetails: data.ncctDetails || fallback.ncctDetails,
+    ncctStanding: status === 'pending' ? 'IN REVIEW' : (data.ncctStanding || (isDefaultWorker ? fallback.ncctStanding : 'APPLICANT')),
+    ncctDetails: data.ncctDetails || (status === 'pending' ? 'Federation membership applicant file awaiting cooperative committee confirmation.' : (isDefaultWorker ? fallback.ncctDetails : 'Cooperative membership record pending.')),
     skills,
     photoUrl,
     summary,
     hourlyRate,
     primaryServiceId,
-    isOnline
+    isOnline,
+    status,
+    rejectionReason,
+    certifications: Array.isArray(data.certifications) ? data.certifications : undefined,
+    toolsEquipped: Array.isArray(data.toolsEquipped) ? data.toolsEquipped : undefined,
+    emergencyAvailable: typeof data.emergencyAvailable === 'boolean' ? data.emergencyAvailable : undefined,
+    aadhaarNumber: data.aadhaarNumber,
+    panNumber: data.panNumber,
+    bankAccount: data.bankAccount,
+    ifscCode: data.ifscCode
   };
 }
 
@@ -498,4 +540,118 @@ export function subscribeToWorkerOnlineStatus(
     return () => {};
   }
 }
+
+/**
+ * Live-subscribes to a single worker's document in Firestore.
+ * Updates in real-time when Admin updates verification status (pending -> approved/rejected/held).
+ */
+export function subscribeToWorkerDoc(
+  workerId: string,
+  onUpdate: (worker: WorkerProfile) => void,
+  onError?: (err: Error) => void
+): Unsubscribe {
+  if (!workerId) return () => {};
+  try {
+    const workerRef = doc(db, 'workers', workerId);
+    return onSnapshot(
+      workerRef,
+      (snapshot) => {
+        if (snapshot.exists()) {
+          const worker = mapFirestoreWorkerDoc(snapshot.id, snapshot.data());
+          onUpdate(worker);
+        }
+      },
+      (error) => {
+        handleFirestoreError(error, OperationType.GET, `workers/${workerId}`);
+        if (onError) onError(error);
+      }
+    );
+  } catch (err) {
+    if (onError && err instanceof Error) onError(err);
+    return () => {};
+  }
+}
+
+export interface NewWorkerRegistrationInput {
+  name: string;
+  phone: string;
+  primaryServiceId: JobCategory;
+  primaryServiceName?: string;
+  subservices: string[];
+  hourlyRate: number;
+  federationName: string;
+  memberSinceYear: number;
+  summary: string;
+  certifications: string[];
+  toolsEquipped: string[];
+  emergencyAvailable: boolean;
+  photoUrl: string;
+  aadhaarNumber?: string;
+  panNumber?: string;
+  bankAccount?: string;
+  ifscCode?: string;
+  registrationNumber?: string;
+  operationalRadiusKm?: number;
+}
+
+/**
+ * Creates a brand new worker document in Firestore with an auto-generated ID.
+ * Sets status: 'pending', isOnline: false, rating: 0, completedJobs: 0, etc.
+ */
+export async function registerNewWorker(input: NewWorkerRegistrationInput): Promise<WorkerProfile> {
+  const tradeSlug = input.primaryServiceId;
+  const tradeCode = tradeSlug.slice(0, 3).toUpperCase();
+  const year = input.memberSinceYear || 2026;
+  const randomSuffix = Math.floor(1000 + Math.random() * 9000);
+  const registrationNumber = input.registrationNumber || `DSF-${tradeCode}-${year}-${randomSuffix}`;
+  const primaryServiceName = JOB_CATEGORY_LABELS[input.primaryServiceId] || tradeSlug;
+
+  const docPayload = {
+    name: input.name.trim(),
+    phone: input.phone.trim(),
+    primaryServiceId: tradeSlug,
+    primaryServiceName,
+    subservices: input.subservices.map(s => s.trim()).filter(Boolean),
+    certifications: input.certifications.map(c => c.trim()).filter(Boolean),
+    toolsEquipped: input.toolsEquipped.map(t => t.trim()).filter(Boolean),
+    registrationNumber,
+    federationName: input.federationName || 'Delhi Shramik Federation',
+    memberSinceYear: year,
+    policeVerified: false,
+    insuranceActive: true,
+    hourlyRate: Number(input.hourlyRate) || 400,
+    summary: input.summary ? input.summary.trim() : '',
+    photoUrl: input.photoUrl || '',
+    emergencyAvailable: Boolean(input.emergencyAvailable),
+    isOnline: false,
+    rating: 0,
+    reviewCount: 0,
+    completedJobs: 0,
+    completedJobsCount: 0,
+    dailyJobsCompleted: 0,
+    todayPayout: 0,
+    dailyJobCap: 4,
+    acceptanceRate: 100,
+    reviews: [],
+    status: 'pending',
+    aadhaarNumber: input.aadhaarNumber || 'XXXX-XXXX-8921',
+    panNumber: input.panNumber || 'ABCDE1234F',
+    bankAccount: input.bankAccount || '•••• •••• •••• 4519',
+    ifscCode: input.ifscCode || 'SBIN0001234',
+    operationalRadiusKm: Number(input.operationalRadiusKm) || 5.0,
+    createdAt: new Date().toISOString()
+  };
+
+  try {
+    const docRef = await addDoc(collection(db, 'workers'), docPayload);
+    return mapFirestoreWorkerDoc(docRef.id, {
+      ...docPayload,
+      id: docRef.id
+    });
+  } catch (error) {
+    handleFirestoreError(error, OperationType.CREATE, 'workers');
+    throw error;
+  }
+}
+
 

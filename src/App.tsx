@@ -13,7 +13,6 @@ import {
 } from './types';
 import { 
   INITIAL_WORKER, 
-  INITIAL_INCOMING_JOBS, 
   WELFARE_BENEFITS, 
   SETTLEMENT_HISTORY, 
   CUSTOMER_REVIEWS 
@@ -26,13 +25,16 @@ import {
 import {
   getWorkerOnlineStatus,
   updateWorkerOnlineStatus,
-  subscribeToWorkerOnlineStatus
+  subscribeToWorkerOnlineStatus,
+  subscribeToWorkerDoc,
+  DEFAULT_WORKERS
 } from './lib/workerService';
 import { Header } from './components/Header';
 import { BottomNav } from './components/BottomNav';
 import { Footer } from './components/Footer';
 import { LoginScreen } from './screens/LoginScreen';
 import { WorkerSelectionScreen } from './screens/WorkerSelectionScreen';
+import { WorkerRegistrationScreen } from './screens/WorkerRegistrationScreen';
 import { SplashScreen } from './screens/SplashScreen';
 import { DashboardScreen } from './screens/DashboardScreen';
 import { JobDetailScreen } from './screens/JobDetailScreen';
@@ -62,7 +64,7 @@ export default function App() {
   // 1. Authentication State
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => {
     const saved = localStorage.getItem(STORAGE_KEYS.IS_LOGGED_IN);
-    return saved !== null ? saved === 'true' : true; // Default to true so user immediately sees dashboard
+    return saved !== null ? saved === 'true' : false; // Default to false so user immediately sees worker selection
   });
 
   // 2. Online / Offline Duty Availability (Most visually prominent control)
@@ -76,7 +78,7 @@ export default function App() {
     const saved = localStorage.getItem(STORAGE_KEYS.CURRENT_SCREEN) as ScreenType;
     return (saved && ['dashboard', 'job_detail', 'active_job', 'earnings', 'profile', 'reviews', 'worker_select'].includes(saved)) 
       ? saved 
-      : 'dashboard';
+      : 'worker_select'; // Default to worker_select
   });
 
   // 4. Worker Profile State
@@ -91,38 +93,39 @@ export default function App() {
   // 6. Selected Job for Detail View
   const [selectedJob, setSelectedJob] = useState<JobRequest | null>(null);
 
-  // 7. Active Job Session State
+  // 7. Active Job Session State (defaults to null; strictly populated only upon accepting a live request)
   const [activeSession, setActiveSession] = useState<ActiveJobSession | null>(() => {
     const saved = localStorage.getItem(STORAGE_KEYS.ACTIVE_SESSION);
     if (saved) {
       try {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        // Discard legacy mock job if previously cached in localStorage
+        if (parsed?.job?.id === 'job-1' && parsed?.job?.customerName === 'Ananya Sharma') {
+          localStorage.removeItem(STORAGE_KEYS.ACTIVE_SESSION);
+          return null;
+        }
+        return parsed;
       } catch {
         return null;
       }
     }
-    // Pre-populate with job-1 in progress step 3 to match prototype screenshot, or active
-    return {
-      job: INITIAL_INCOMING_JOBS[0],
-      currentStep: 3,
-      startedAt: '14:15',
-      stepTimestamps: {
-        enRouteAt: '14:02',
-        arrivedAt: '14:12',
-        startedAt: '14:15'
-      },
-      checklist: [
-        { id: 'chk-1', text: 'Isolate main stopcock valve before brazing', done: true },
-        { id: 'chk-2', text: 'Check 1/2 inch copper compression coupler fitting', done: true },
-        { id: 'chk-3', text: 'Run pressure test for 3 minutes before departure', done: false }
-      ]
-    };
+    return null;
   });
+
+  // Helper to compute initial week earnings for a worker persona
+  const getWorkerInitialEarnings = (p: WorkerProfile) => {
+    const saved = localStorage.getItem(`sahyog_worker_earnings_${p.id}`);
+    if (saved !== null) {
+      return parseInt(saved, 10) || 0;
+    }
+    const isDefault = DEFAULT_WORKERS.some(w => w.id === p.id);
+    // Only pre-seeded default demo workers have prior demo week history. New / non-seed workers start at 0
+    return isDefault ? 8450 : (p.todayPayout || 0);
+  };
 
   // 8. Financial earnings state
   const [currentWeekTotal, setCurrentWeekTotal] = useState<number>(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.WEEK_EARNINGS);
-    return saved ? parseInt(saved, 10) : 8450;
+    return getWorkerInitialEarnings(worker);
   });
 
   // 9. Toast Notification Message
@@ -147,11 +150,17 @@ export default function App() {
   }, []);
 
   // 1. Live subscription to Firestore "bookings" collection
-  // Filtered where workerId equals this worker's own id AND status equals "requested"
+  // Filtered strictly to real bookings for this worker / trade category
+  // Gated: do not subscribe to bookings queue if worker is pending, rejected, or held
   useEffect(() => {
     if (!worker?.id) return;
+    if (worker.status && worker.status !== 'approved') {
+      setIncomingJobs([]);
+      return;
+    }
+
     const unsubscribe = subscribeToIncomingBookings(
-      worker.id,
+      worker,
       (jobs) => {
         setIncomingJobs(jobs);
       },
@@ -162,6 +171,31 @@ export default function App() {
 
     return () => {
       unsubscribe();
+    };
+  }, [worker.id, worker.primaryServiceId, worker.status]);
+
+  // Live sync of the entire worker doc from Firestore (status, rejectionReason, verified, etc.)
+  // When Admin updates worker verification in Firestore, this listener receives it in real-time.
+  useEffect(() => {
+    if (!worker?.id) return;
+    const unsubscribe = subscribeToWorkerDoc(worker.id, (updatedWorker) => {
+      setWorker((prev) => {
+        if (
+          prev.status !== updatedWorker.status ||
+          prev.rejectionReason !== updatedWorker.rejectionReason ||
+          prev.name !== updatedWorker.name ||
+          prev.isOnline !== updatedWorker.isOnline ||
+          prev.rating !== updatedWorker.rating ||
+          prev.completedJobsCount !== updatedWorker.completedJobsCount
+        ) {
+          return { ...prev, ...updatedWorker };
+        }
+        return prev;
+      });
+    });
+
+    return () => {
+      if (typeof unsubscribe === 'function') unsubscribe();
     };
   }, [worker.id]);
 
@@ -391,6 +425,7 @@ export default function App() {
   const handleSelectWorker = (selectedWorker: WorkerProfile) => {
     const isDifferent = selectedWorker.id !== worker.id;
     setWorker(selectedWorker);
+    localStorage.setItem(STORAGE_KEYS.WORKER_PROFILE, JSON.stringify(selectedWorker));
     setIsLoggedIn(true);
     setCurrentScreen('dashboard');
     if (isDifferent) {
@@ -401,6 +436,8 @@ export default function App() {
         setIsOnline(selectedWorker.isOnline);
         localStorage.setItem(STORAGE_KEYS.IS_ONLINE, String(selectedWorker.isOnline));
       }
+      const initialEarnings = getWorkerInitialEarnings(selectedWorker);
+      setCurrentWeekTotal(initialEarnings);
     }
     showToast(`Switched persona to ${selectedWorker.name} (${selectedWorker.trade}).`);
   };
@@ -429,12 +466,35 @@ export default function App() {
     );
   }
 
+  // If registering as a new worker
+  if (currentScreen === 'worker_register') {
+    return (
+      <WorkerRegistrationScreen
+        onSuccess={(newWorker) => {
+          handleSelectWorker(newWorker);
+          showToast(`Welcome ${newWorker.name}! Application submitted (Pending Review).`);
+        }}
+        onCancel={() => {
+          if (isLoggedIn) {
+            setCurrentScreen('dashboard');
+          } else {
+            setCurrentScreen('worker_select');
+          }
+        }}
+      />
+    );
+  }
+
   // If not logged in or worker_select screen active, render lightweight WorkerSelectionScreen
   if (!isLoggedIn || currentScreen === 'worker_select') {
     return (
       <WorkerSelectionScreen
         currentWorkerId={worker?.id}
         onSelectWorker={handleSelectWorker}
+        onRegisterNewWorker={() => {
+          setCurrentScreen('worker_register');
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
         onCancel={() => {
           if (isLoggedIn) {
             setCurrentScreen('dashboard');

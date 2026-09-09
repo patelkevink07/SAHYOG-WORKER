@@ -19,12 +19,15 @@ import {
   ShieldCheck,
   UserCheck,
   RefreshCw,
-  X
+  X,
+  UserPlus,
+  Plus
 } from 'lucide-react';
 
 interface WorkerSelectionScreenProps {
   currentWorkerId?: string;
   onSelectWorker: (worker: WorkerProfile) => void;
+  onRegisterNewWorker?: () => void;
   onCancel?: () => void;
   canCancel?: boolean;
 }
@@ -47,6 +50,7 @@ function getTradeIcon(trade: string, categoryId?: string) {
 export const WorkerSelectionScreen: React.FC<WorkerSelectionScreenProps> = ({
   currentWorkerId,
   onSelectWorker,
+  onRegisterNewWorker,
   onCancel,
   canCancel = false
 }) => {
@@ -78,7 +82,7 @@ export const WorkerSelectionScreen: React.FC<WorkerSelectionScreenProps> = ({
     <div className="min-h-screen bg-[#FAFAF9] text-[#14181F] flex flex-col items-center px-4 sm:px-6 md:px-8 py-8 md:py-12 antialiased">
       <div className="w-full max-w-5xl lg:max-w-6xl">
         {/* Header Section */}
-        <div className="flex items-center justify-between mb-6 pb-4 border-b border-[#E7E5E1]">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-[#E7E5E1]">
           <div className="flex items-center gap-3.5">
             <SahyogLogo size="md" />
             <div>
@@ -87,42 +91,94 @@ export const WorkerSelectionScreen: React.FC<WorkerSelectionScreenProps> = ({
                   Switch Worker Persona
                 </h1>
                 <span className="text-[10px] md:text-[11px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded-[4px] bg-[#E7E5E1] text-[#14181F]">
-                  Demo Registry
+                  Cooperative Registry
                 </span>
               </div>
               <p className="text-[13px] md:text-[14px] text-[#6B7280] mt-0.5">
-                Select any trade partner to operate their live Sahyog dispatch terminal
+                Select any trade partner to operate their live Sahyog dispatch terminal or register a new partner
               </p>
             </div>
           </div>
 
-          {canCancel && onCancel && (
-            <button
-              type="button"
-              id="worker-select-cancel-btn"
-              onClick={onCancel}
-              className="p-2 text-[#6B7280] hover:text-[#14181F] hover:bg-[#E7E5E1]/60 rounded-[8px] transition-colors"
-              title="Return to current worker session"
-              aria-label="Close worker selection"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          )}
+          <div className="flex items-center gap-2 self-start sm:self-auto">
+            {onRegisterNewWorker && (
+              <button
+                type="button"
+                id="header-register-worker-btn"
+                onClick={onRegisterNewWorker}
+                className="px-3.5 py-2 rounded-[8px] bg-[#1F4D3D] text-[#FFFFFF] hover:bg-[#173C2F] text-[13px] font-[600] inline-flex items-center gap-1.5 shadow-xs transition-colors"
+              >
+                <UserPlus className="w-4 h-4" />
+                <span>+ Register as New Worker</span>
+              </button>
+            )}
+
+            {canCancel && onCancel && (
+              <button
+                type="button"
+                id="worker-select-cancel-btn"
+                onClick={onCancel}
+                className="p-2 text-[#6B7280] hover:text-[#14181F] hover:bg-[#E7E5E1]/60 rounded-[8px] transition-colors"
+                title="Return to current worker session"
+                aria-label="Close worker selection"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Informational banner */}
         <div className="mb-6 p-4 bg-[#FFFFFF] border border-[#E7E5E1] rounded-[10px] md:rounded-[12px] flex items-start gap-3 shadow-xs">
           <ShieldCheck className="w-5 h-5 text-[#1F4D3D] flex-shrink-0 mt-0.5" />
           <div className="text-[13px] text-[#4B5563] leading-relaxed">
-            <span className="font-[600] text-[#14181F]">10 Federation Trades Connected: </span>
+            <span className="font-[600] text-[#14181F]">Federation Trades Connected: </span>
             Each card links directly to that worker's assigned dispatch queue in Firestore. Selecting a worker immediately updates the incoming bookings listener, acceptance actions, and status updates for that persona.
           </div>
         </div>
 
-        {/* Worker Cards Grid (10 workers, 1 col on mobile, 2 col on sm/md, 3 col on lg) */}
+        {/* Worker Cards Grid (including "+ Register as New Worker" card) */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 md:gap-4">
+          {/* Register New Worker Card */}
+          {onRegisterNewWorker && (
+            <button
+              type="button"
+              id="grid-register-worker-card"
+              onClick={onRegisterNewWorker}
+              className="w-full p-4 md:p-5 rounded-[10px] md:rounded-[12px] border-2 border-dashed border-[#1F4D3D]/40 bg-[#F4F9F6]/60 hover:bg-[#F4F9F6] hover:border-[#1F4D3D] text-left transition-all duration-150 flex flex-col justify-between group focus:outline-hidden focus:ring-2 focus:ring-[#1F4D3D] focus:ring-offset-1 min-h-[170px]"
+            >
+              <div>
+                <div className="flex items-start gap-3">
+                  <div className="w-12 h-12 rounded-[10px] bg-[#1F4D3D]/10 border border-[#1F4D3D]/20 flex items-center justify-center flex-shrink-0 group-hover:bg-[#1F4D3D] transition-colors">
+                    <UserPlus className="w-6 h-6 text-[#1F4D3D] group-hover:text-[#FFFFFF] transition-colors" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <span className="text-[11px] font-[700] uppercase tracking-wider text-[#1F4D3D]">
+                      Onboarding Portal
+                    </span>
+                    <h3 className="text-[16px] font-[700] text-[#14181F] group-hover:text-[#1F4D3D] transition-colors mt-0.5">
+                      + Register as New Worker
+                    </h3>
+                    <p className="text-[12px] text-[#6B7280] mt-1 leading-snug">
+                      Join federation registry, submit trade credentials, and get assigned dispatch terminal.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-4 pt-2.5 border-t border-dashed border-[#1F4D3D]/20 flex items-center justify-between text-[12.5px] font-[650] text-[#1F4D3D]">
+                <span>Self-Registration Form</span>
+                <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+              </div>
+            </button>
+          )}
+
           {workers.map((worker) => {
             const isCurrent = worker.id === currentWorkerId;
+            const isPending = worker.status === 'pending';
+            const isRejected = worker.status === 'rejected';
+            const isHeld = worker.status === 'held';
+
             return (
               <button
                 key={worker.id}
@@ -135,11 +191,29 @@ export const WorkerSelectionScreen: React.FC<WorkerSelectionScreenProps> = ({
                     : 'bg-[#FFFFFF] border-[#E7E5E1] hover:border-[#CBD5E1] hover:shadow-xs'
                 }`}
               >
-                {/* Active Indicator Chip */}
+                {/* Active / Status Indicator Chip */}
                 {isCurrent && (
                   <span className="absolute top-3 right-3 px-2 py-0.5 rounded-[6px] bg-[#1F4D3D] text-[#FFFFFF] text-[10.5px] font-[600] inline-flex items-center gap-1 shadow-xs">
                     <Check className="w-3 h-3 stroke-[3px]" />
                     <span>Active Now</span>
+                  </span>
+                )}
+
+                {!isCurrent && isPending && (
+                  <span className="absolute top-3 right-3 px-2 py-0.5 rounded-[6px] bg-[#FEF3C7] text-[#92400E] text-[10px] font-[700] uppercase tracking-wider border border-[#FDE68A]">
+                    Under Review
+                  </span>
+                )}
+
+                {!isCurrent && isRejected && (
+                  <span className="absolute top-3 right-3 px-2 py-0.5 rounded-[6px] bg-[#FEE2E2] text-[#991B1B] text-[10px] font-[700] uppercase tracking-wider border border-[#FECACA]">
+                    Not Approved
+                  </span>
+                )}
+
+                {!isCurrent && isHeld && (
+                  <span className="absolute top-3 right-3 px-2 py-0.5 rounded-[6px] bg-[#F3F4F6] text-[#4B5563] text-[10px] font-[700] uppercase tracking-wider border border-[#E5E7EB]">
+                    Held
                   </span>
                 )}
 
@@ -193,7 +267,7 @@ export const WorkerSelectionScreen: React.FC<WorkerSelectionScreenProps> = ({
                 {/* Bottom action hint */}
                 <div className="mt-3 pt-2 border-t border-dashed border-[#E7E5E1] flex items-center justify-between text-[12px]">
                   <div className="flex items-center gap-2">
-                    <span className="text-[11.5px] text-[#6B7280] font-mono">
+                    <span className="text-[11.5px] text-[#6B7280] font-mono truncate max-w-[110px]" title={worker.id}>
                       ID: {worker.id}
                     </span>
                     {worker.isOnline !== undefined && (
@@ -227,3 +301,4 @@ export const WorkerSelectionScreen: React.FC<WorkerSelectionScreenProps> = ({
     </div>
   );
 };
+

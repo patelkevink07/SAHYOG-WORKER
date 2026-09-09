@@ -9,7 +9,7 @@ import {
   Unsubscribe 
 } from 'firebase/firestore';
 import { db } from './firebase';
-import { JobCategory, JobRequest, JobUrgency } from '../types';
+import { JobCategory, JobRequest, JobUrgency, WorkerProfile } from '../types';
 
 export enum OperationType {
   CREATE = 'create',
@@ -153,26 +153,72 @@ export function mapBookingDocToJobRequest(id: string, data: Record<string, any>)
 
 /**
  * 1. The incoming job queue live-subscribes (onSnapshot) to the "bookings" collection,
- * filtered where workerId equals this worker's own id AND status equals "requested".
+ * filtered to dispatches targeted to this worker (by worker ID or primary service category)
+ * with status "requested" or "pending".
  */
 export function subscribeToIncomingBookings(
-  workerId: string,
+  workerOrId: string | WorkerProfile,
   onUpdate: (jobs: JobRequest[]) => void,
   onError?: (error: Error) => void
 ): Unsubscribe {
+  const workerId = typeof workerOrId === 'string' ? workerOrId : workerOrId.id;
+  const primaryServiceId = typeof workerOrId === 'object' && workerOrId.primaryServiceId 
+    ? workerOrId.primaryServiceId.toLowerCase()
+    : '';
+
   const bookingsRef = collection(db, 'bookings');
-  const q = query(
-    bookingsRef,
-    where('workerId', '==', workerId),
-    where('status', '==', 'requested')
-  );
 
   return onSnapshot(
-    q,
+    bookingsRef,
     (snapshot) => {
-      const jobs: JobRequest[] = snapshot.docs.map((docSnap) => 
-        mapBookingDocToJobRequest(docSnap.id, docSnap.data())
-      );
+      const jobs: JobRequest[] = [];
+      snapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        const status = String(data.status || '').toLowerCase().trim();
+        
+        // Only consider pending/requested bookings
+        if (status !== 'requested' && status !== 'pending') {
+          return;
+        }
+
+        const rawCategory = String(data.category || data.serviceCategory || data.service || '').toLowerCase().trim();
+        const docWorkerId = String(data.workerId || '').trim();
+
+        // Check if directly addressed to this worker (by ID or trade worker ID)
+        const isDirectWorkerMatch = Boolean(
+          docWorkerId && (
+            docWorkerId === workerId ||
+            (primaryServiceId && (
+              docWorkerId === `worker-${primaryServiceId}` ||
+              docWorkerId === primaryServiceId
+            ))
+          )
+        );
+
+        // If explicitly assigned to a different worker, don't show here
+        const isAssignedToOtherWorker = Boolean(
+          docWorkerId && !isDirectWorkerMatch
+        );
+
+        if (isAssignedToOtherWorker) {
+          return;
+        }
+
+        // Category match check
+        const isCategoryMatch = Boolean(
+          primaryServiceId && (
+            rawCategory === primaryServiceId ||
+            rawCategory.replace(/\s+/g, '-') === primaryServiceId ||
+            rawCategory.includes(primaryServiceId)
+          )
+        );
+
+        // Accept if directly assigned to this worker, OR if unassigned broadcast and matches this worker's trade category
+        if (isDirectWorkerMatch || (!docWorkerId && isCategoryMatch)) {
+          jobs.push(mapBookingDocToJobRequest(docSnap.id, data));
+        }
+      });
+
       onUpdate(jobs);
     },
     (error) => {

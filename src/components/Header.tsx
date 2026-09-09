@@ -64,9 +64,26 @@ export const Header: React.FC<HeaderProps> = ({
                 <span className="text-[13px] sm:text-[14px] md:text-[15px] font-[700] tracking-tight text-[#1F4D3D]">
                   Partner Terminal
                 </span>
-                <span className="text-[10px] uppercase font-semibold px-1.5 py-0.5 rounded-[4px] bg-[#E7E5E1]/70 text-[#14181F]/80">
-                  SIH26089
-                </span>
+                {worker.status === 'pending' && (
+                  <span className="text-[9.5px] uppercase font-bold px-1.5 py-0.5 rounded-[4px] bg-[#FEF3C7] text-[#92400E] border border-[#FDE68A]">
+                    Under Review
+                  </span>
+                )}
+                {worker.status === 'rejected' && (
+                  <span className="text-[9.5px] uppercase font-bold px-1.5 py-0.5 rounded-[4px] bg-[#FEE2E2] text-[#991B1B] border border-[#FECACA]">
+                    Rejected
+                  </span>
+                )}
+                {worker.status === 'held' && (
+                  <span className="text-[9.5px] uppercase font-bold px-1.5 py-0.5 rounded-[4px] bg-[#F3F4F6] text-[#4B5563] border border-[#E5E7EB]">
+                    Held
+                  </span>
+                )}
+                {(!worker.status || worker.status === 'approved') && (
+                  <span className="text-[10px] uppercase font-semibold px-1.5 py-0.5 rounded-[4px] bg-[#E7E5E1]/70 text-[#14181F]/80">
+                    SIH26089
+                  </span>
+                )}
               </div>
               <span className="text-[11.5px] sm:text-[12px] font-[500] text-[#6B7280] leading-tight truncate max-w-[130px] xs:max-w-[180px] sm:max-w-xs md:max-w-sm">
                 {worker.name} · {worker.trade}
@@ -98,7 +115,9 @@ export const Header: React.FC<HeaderProps> = ({
               className="hidden sm:inline-flex items-center gap-1.5 px-2.5 md:px-3 py-1.5 text-[12px] font-medium text-[#14181F] hover:bg-[#FAFAF9] border border-[#E7E5E1] rounded-[8px] transition-colors focus:outline-hidden focus:ring-2 focus:ring-[#1F4D3D]"
             >
               <Star className="w-3.5 h-3.5 fill-[#C9A227] text-[#C9A227]" />
-              <span className="tabular-nums font-semibold">{worker.rating.toFixed(2)}</span>
+              <span className="tabular-nums font-semibold">
+                {worker.reviewCount > 0 ? worker.rating.toFixed(2) : 'New'}
+              </span>
               <span className="text-[#6B7280]">({worker.reviewCount})</span>
             </button>
 

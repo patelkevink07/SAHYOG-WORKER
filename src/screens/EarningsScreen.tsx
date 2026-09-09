@@ -8,7 +8,8 @@ import {
   CheckCircle2, 
   Calendar,
   Layers,
-  ArrowUpRight
+  ArrowUpRight,
+  Clock
 } from 'lucide-react';
 
 interface EarningsScreenProps {
@@ -28,19 +29,29 @@ export const EarningsScreen: React.FC<EarningsScreenProps> = ({
 
   const grossEarnings = period === 'week' ? currentWeekTotal : currentWeekTotal * 4.2;
   const platformFee = 0; // 0% cooperative cut
-  const welfareReserve = period === 'week' ? 200 : 800;
-  const netEarnings = grossEarnings - welfareReserve;
+  const welfareReserve = grossEarnings > 0 ? (period === 'week' ? Math.min(200, grossEarnings) : Math.min(800, grossEarnings)) : 0;
+  const netEarnings = Math.max(0, grossEarnings - welfareReserve);
 
   // Daily distribution data for simple clean bar chart
-  const weekDays = [
-    { day: 'Mon', amount: 1450, jobs: 3 },
-    { day: 'Tue', amount: 1200, jobs: 2 },
-    { day: 'Wed', amount: 1850, jobs: 4 },
-    { day: 'Thu', amount: 1600, jobs: 3 },
-    { day: 'Fri', amount: 1300, jobs: 3 },
-    { day: 'Sat', amount: 1050, jobs: 2 },
-    { day: 'Sun', amount: currentWeekTotal - 8450 > 0 ? (currentWeekTotal - 8450) : 0, jobs: 1 }
-  ];
+  const weekDays = completedJobsCount === 0 && currentWeekTotal === 0
+    ? [
+        { day: 'Mon', amount: 0, jobs: 0 },
+        { day: 'Tue', amount: 0, jobs: 0 },
+        { day: 'Wed', amount: 0, jobs: 0 },
+        { day: 'Thu', amount: 0, jobs: 0 },
+        { day: 'Fri', amount: 0, jobs: 0 },
+        { day: 'Sat', amount: 0, jobs: 0 },
+        { day: 'Sun', amount: 0, jobs: 0 }
+      ]
+    : [
+        { day: 'Mon', amount: 1450, jobs: 3 },
+        { day: 'Tue', amount: 1200, jobs: 2 },
+        { day: 'Wed', amount: 1850, jobs: 4 },
+        { day: 'Thu', amount: 1600, jobs: 3 },
+        { day: 'Fri', amount: 1300, jobs: 3 },
+        { day: 'Sat', amount: 1050, jobs: 2 },
+        { day: 'Sun', amount: currentWeekTotal - 8450 > 0 ? (currentWeekTotal - 8450) : 0, jobs: 1 }
+      ];
 
   const maxDailyAmount = Math.max(...weekDays.map(d => d.amount), 2000);
 
@@ -182,32 +193,42 @@ export const EarningsScreen: React.FC<EarningsScreenProps> = ({
               Settlement History
             </h4>
 
-            <div className="space-y-2.5">
-              {settlements.map((st) => (
-                <div 
-                  key={st.id} 
-                  className="flex items-center justify-between p-3.5 bg-[#FAFAF9] hover:bg-[#F4F4F2] border border-[#E7E5E1] rounded-[8px] text-[13px] md:text-[13.5px] transition-colors"
-                >
-                  <div>
-                    <div className="font-[600] text-[#14181F]">
-                      Direct Bank NEFT · {st.bankAccount}
+            {completedJobsCount === 0 || settlements.length === 0 ? (
+              <div className="py-7 text-center text-[#6B7280]">
+                <Clock className="w-6 h-6 text-[#9CA3AF] mx-auto mb-2" />
+                <p className="text-[13px] font-[600] text-[#14181F]">No Past Settlements</p>
+                <p className="text-[12px] text-[#6B7280] mt-0.5 max-w-xs mx-auto">
+                  Weekly earnings are credited via direct NEFT every Friday once you complete citizen bookings.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-2.5">
+                {settlements.map((st) => (
+                  <div 
+                    key={st.id} 
+                    className="flex items-center justify-between p-3.5 bg-[#FAFAF9] hover:bg-[#F4F4F2] border border-[#E7E5E1] rounded-[8px] text-[13px] md:text-[13.5px] transition-colors"
+                  >
+                    <div>
+                      <div className="font-[600] text-[#14181F]">
+                        Direct Bank NEFT · {st.bankAccount}
+                      </div>
+                      <div className="text-[11px] md:text-[12px] text-[#6B7280] mt-0.5">
+                        Ref: {st.reference} · {st.date}
+                      </div>
                     </div>
-                    <div className="text-[11px] md:text-[12px] text-[#6B7280] mt-0.5">
-                      Ref: {st.reference} · {st.date}
-                    </div>
-                  </div>
 
-                  <div className="text-right">
-                    <span className="font-[650] text-[#14181F] tabular-nums text-[14px] md:text-[15px]">
-                      ₹{st.amount.toLocaleString('en-IN')}
-                    </span>
-                    <span className="block text-[11px] text-[#15803D] font-[600]">
-                      {st.status}
-                    </span>
+                    <div className="text-right">
+                      <span className="font-[650] text-[#14181F] tabular-nums text-[14px] md:text-[15px]">
+                        ₹{st.amount.toLocaleString('en-IN')}
+                      </span>
+                      <span className="block text-[11px] text-[#15803D] font-[600]">
+                        {st.status}
+                      </span>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 

@@ -1,6 +1,7 @@
 export type ScreenType = 
   | 'login'
   | 'worker_select'
+  | 'worker_register'
   | 'dashboard'
   | 'job_detail'
   | 'active_job'
@@ -107,8 +108,17 @@ export interface WorkerProfile {
   photoUrl?: string;
   summary?: string;
   hourlyRate?: number;
-  primaryServiceId?: string;
+  primaryServiceId?: JobCategory | string;
   isOnline?: boolean;
+  status?: 'pending' | 'approved' | 'rejected' | 'held';
+  rejectionReason?: string;
+  certifications?: string[];
+  toolsEquipped?: string[];
+  emergencyAvailable?: boolean;
+  aadhaarNumber?: string;
+  panNumber?: string;
+  bankAccount?: string;
+  ifscCode?: string;
 }
 
 export interface WelfareBenefit {
