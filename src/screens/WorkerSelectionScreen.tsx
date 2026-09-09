@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { WorkerProfile } from '../types';
 import { SahyogLogo } from '../components/SahyogLogo';
+import { getLocalWorkerPhoto } from '../lib/workerPhotos';
 import { subscribeToWorkers, DEFAULT_WORKERS } from '../lib/workerService';
 import { 
   Wrench, 
@@ -56,6 +57,7 @@ export const WorkerSelectionScreen: React.FC<WorkerSelectionScreenProps> = ({
 }) => {
   const [workers, setWorkers] = useState<WorkerProfile[]>(DEFAULT_WORKERS);
   const [isLoading, setIsLoading] = useState(true);
+  const [failedImageIds, setFailedImageIds] = useState<Record<string, boolean>>({});
 
   // Subscribe to live Firestore workers collection
   useEffect(() => {
@@ -221,14 +223,20 @@ export const WorkerSelectionScreen: React.FC<WorkerSelectionScreenProps> = ({
                   {/* Top row: Avatar/Icon + Trade & Name */}
                   <div className="flex items-start gap-3">
                     <div className="w-12 h-12 rounded-[10px] overflow-hidden bg-[#FAFAF9] border border-[#E7E5E1] flex items-center justify-center flex-shrink-0 group-hover:bg-[#FFFFFF] transition-colors">
-                      {worker.photoUrl ? (
+                      {worker.photoUrl && !failedImageIds[worker.id] ? (
                         <img
                           src={worker.photoUrl}
                           alt={worker.name}
                           className="w-full h-full object-cover"
+                          referrerPolicy="no-referrer"
+                          onError={() => setFailedImageIds(prev => ({ ...prev, [worker.id]: true }))}
                         />
                       ) : (
-                        getTradeIcon(worker.trade, worker.primaryServiceId)
+                        <img
+                          src={getLocalWorkerPhoto(worker.primaryServiceId, worker.trade)}
+                          alt={worker.name}
+                          className="w-full h-full object-cover"
+                        />
                       )}
                     </div>
 

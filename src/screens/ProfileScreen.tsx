@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { WorkerProfile } from '../types';
+import { getLocalWorkerPhoto } from '../lib/workerPhotos';
 import { 
   Shield, 
   Check, 
@@ -31,6 +32,12 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
 }) => {
   const [radius, setRadius] = useState(worker.operationalRadiusKm);
   const [showRadiusSaved, setShowRadiusSaved] = useState(false);
+  const [imageError, setImageError] = useState(false);
+
+  // Reset image error state if worker changes
+  React.useEffect(() => {
+    setImageError(false);
+  }, [worker.photoUrl]);
 
   const handleRadiusChange = (newRadius: number) => {
     setRadius(newRadius);
@@ -44,16 +51,20 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
       {/* Worker Profile Header Card */}
       <div className="bg-[#FFFFFF] border border-[#E7E5E1] rounded-[10px] md:rounded-[12px] p-5 sm:p-6 md:p-8 shadow-xs">
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
-          {worker.photoUrl ? (
+          {worker.photoUrl && !imageError ? (
             <img 
               src={worker.photoUrl} 
               alt={worker.name}
               className="w-16 h-16 md:w-20 md:h-20 rounded-full object-cover ring-2 ring-[#E7E5E1] flex-shrink-0" 
+              referrerPolicy="no-referrer"
+              onError={() => setImageError(true)}
             />
           ) : (
-            <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-[#1F4D3D] text-[#FFFFFF] flex items-center justify-center font-[700] text-[22px] md:text-[26px] ring-2 ring-[#E7E5E1] flex-shrink-0">
-              {worker.avatarInitials}
-            </div>
+            <img 
+              src={getLocalWorkerPhoto(worker.primaryServiceId, worker.trade)} 
+              alt={worker.name}
+              className="w-16 h-16 md:w-20 md:h-20 rounded-full object-cover ring-2 ring-[#E7E5E1] flex-shrink-0" 
+            />
           )}
 
           <div className="flex-1 min-w-0">

@@ -9,7 +9,8 @@ import {
   JobRequest, 
   ActiveJobSession, 
   WorkerProfile, 
-  StepState 
+  StepState,
+  Dispute
 } from './types';
 import { 
   INITIAL_WORKER, 
@@ -42,6 +43,7 @@ import { ActiveJobScreen } from './screens/ActiveJobScreen';
 import { EarningsScreen } from './screens/EarningsScreen';
 import { ProfileScreen } from './screens/ProfileScreen';
 import { ReviewsScreen } from './screens/ReviewsScreen';
+import { DisputeThreadScreen } from './screens/DisputeThreadScreen';
 import { CheckCircle2, AlertCircle } from 'lucide-react';
 
 const STORAGE_KEYS = {
@@ -130,6 +132,9 @@ export default function App() {
 
   // 9. Toast Notification Message
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // 10. Selected Dispute statement case
+  const [selectedDispute, setSelectedDispute] = useState<Dispute | null>(null);
 
   // Persistence effects
   useEffect(() => {
@@ -520,6 +525,11 @@ export default function App() {
           window.scrollTo({ top: 0, behavior: 'smooth' });
         }}
         onSwitchWorker={handleOpenWorkerSelect}
+        onSelectDispute={(dispute) => {
+          setSelectedDispute(dispute);
+          setCurrentScreen('dispute_thread');
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
       />
 
       {/* Main Container: Wide, intentional responsive layout for desktop with proper spacing */}
@@ -581,6 +591,17 @@ export default function App() {
             worker={worker}
             reviews={CUSTOMER_REVIEWS}
             onBack={() => setCurrentScreen('dashboard')}
+          />
+        )}
+
+        {currentScreen === 'dispute_thread' && selectedDispute && (
+          <DisputeThreadScreen
+            dispute={selectedDispute}
+            workerName={worker.name}
+            onBack={() => {
+              setSelectedDispute(null);
+              setCurrentScreen('dashboard');
+            }}
           />
         )}
 

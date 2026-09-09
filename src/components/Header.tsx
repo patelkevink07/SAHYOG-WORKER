@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { SahyogLogo } from './SahyogLogo';
-import { WorkerProfile } from '../types';
-import { Bell, CheckCircle2, ShieldAlert, Star, X, ArrowLeftRight } from 'lucide-react';
+import { WorkerProfile, Dispute } from '../types';
+import { Bell, CheckCircle2, ShieldAlert, Star, X, ArrowLeftRight, Scale } from 'lucide-react';
+import { subscribeToDisputes } from '../lib/disputeService';
 
 interface HeaderProps {
   worker: WorkerProfile;
@@ -9,6 +10,7 @@ interface HeaderProps {
   onOpenReviews: () => void;
   onNavigateHome: () => void;
   onSwitchWorker?: () => void;
+  onSelectDispute: (dispute: Dispute) => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -16,34 +18,39 @@ export const Header: React.FC<HeaderProps> = ({
   isOnline,
   onOpenReviews,
   onNavigateHome,
-  onSwitchWorker
+  onSwitchWorker,
+  onSelectDispute
 }) => {
   const [showNotifications, setShowNotifications] = useState(false);
-  const [hasUnread, setHasUnread] = useState(true);
+  const [disputes, setDisputes] = useState<Dispute[]>([]);
 
-  const notifications = [
-    {
-      id: 'n-1',
-      title: 'Emergency dispatch pool active',
-      time: '10m ago',
-      desc: 'High demand for plumbers detected in Mayur Vihar & Patparganj.',
-      type: 'dispatch'
-    },
-    {
-      id: 'n-2',
-      title: 'Weekly settlement credited',
-      time: 'Yesterday',
-      desc: '₹7,920 settled via NEFT to HDFC Bank ****4102. Ref: COOP-TXN-88192.',
-      type: 'settlement'
-    },
-    {
-      id: 'n-3',
-      title: 'NCCT compliance valid',
-      time: '3 days ago',
-      desc: 'Annual trade verification and health mutual cover renewed through Dec 2026.',
-      type: 'welfare'
-    }
-  ];
+  // Live snapshot subscription to disputes filtered by the current worker's ID
+  useEffect(() => {
+    if (!worker?.id) return;
+
+    const unsubscribe = subscribeToDisputes(
+      worker.id,
+      (loadedDisputes) => {
+        // Sort disputes: unread first, then by lodgedDate descending
+        const sorted = [...loadedDisputes].sort((a, b) => {
+          if (a.hasWorkerUnreadUpdate && !b.hasWorkerUnreadUpdate) return -1;
+          if (!a.hasWorkerUnreadUpdate && b.hasWorkerUnreadUpdate) return 1;
+          return b.lodgedDate.localeCompare(a.lodgedDate);
+        });
+        setDisputes(sorted);
+      },
+      (error) => {
+        console.error('Error in Header dispute subscription:', error);
+      }
+    );
+
+    return () => {
+      unsubscribe();
+    };
+  }, [worker.id]);
+
+  // Compute unread status based on live disputes collection documents' "hasWorkerUnreadUpdate"
+  const hasUnread = disputes.some((d) => d.hasWorkerUnreadUpdate);
 
   return (
     <>
@@ -126,7 +133,6 @@ export const Header: React.FC<HeaderProps> = ({
               id="header-notif-btn"
               onClick={() => {
                 setShowNotifications(!showNotifications);
-                setHasUnread(false);
               }}
               className="relative p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center text-[#6B7280] hover:text-[#14181F] hover:bg-[#FAFAF9] rounded-[8px] focus:outline-hidden focus:ring-2 focus:ring-[#1F4D3D] transition-colors"
               aria-label="View notifications"
@@ -152,8 +158,8 @@ export const Header: React.FC<HeaderProps> = ({
           >
             <div className="p-4 border-b border-[#E7E5E1] flex items-center justify-between">
               <div>
-                <h3 className="text-[16px] font-[650] text-[#14181F]">Federation Notices</h3>
-                <p className="text-[12px] text-[#6B7280]">Real-time operational dispatches</p>
+                <h3 className="text-[16px] font-[650] text-[#14181F]">Federation Terminal Alerts</h3>
+                <p className="text-[12px] text-[#6B7280]">Real-time operational dispatches &amp; disputes</p>
               </div>
               <button
                 onClick={() => setShowNotifications(false)}
@@ -164,27 +170,71 @@ export const Header: React.FC<HeaderProps> = ({
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4 space-y-3">
-              {notifications.map((n) => (
-                <div 
-                  key={n.id}
-                  className="p-3.5 bg-[#FAFAF9] border border-[#E7E5E1] rounded-[10px] text-left"
-                >
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-[13px] font-[650] text-[#14181F] flex items-center gap-1.5">
-                      {n.type === 'dispatch' && <ShieldAlert className="w-3.5 h-3.5 text-[#1F4D3D]" />}
-                      {n.type === 'settlement' && <CheckCircle2 className="w-3.5 h-3.5 text-[#15803D]" />}
-                      {n.title}
-                    </span>
-                    <span className="text-[11px] text-[#6B7280] tabular-nums">{n.time}</span>
-                  </div>
-                  <p className="text-[12px] text-[#6B7280] leading-relaxed">{n.desc}</p>
+            <div className="flex-1 overflow-y-auto p-4 space-y-3.5">
+              {disputes.length === 0 ? (
+                <div className="py-12 text-center max-w-xs mx-auto">
+                  <CheckCircle2 className="w-8 h-8 text-[#15803D] mx-auto mb-2" />
+                  <h4 className="text-[14px] font-[650] text-[#14181F]">All Clear! No Disputes</h4>
+                  <p className="text-[12px] text-[#6B7280] mt-1">
+                    You have no active disputes with cooperative citizens. Keep up the clean work!
+                  </p>
                 </div>
-              ))}
+              ) : (
+                <div className="space-y-3">
+                  <div className="text-[11px] font-semibold text-[#6B7280] uppercase tracking-wider mb-2">
+                    Active Mediation Cases ({disputes.length})
+                  </div>
+                  {disputes.map((dispute) => (
+                    <button
+                      key={dispute.id}
+                      onClick={() => {
+                        onSelectDispute(dispute);
+                        setShowNotifications(false);
+                      }}
+                      className={`w-full p-3.5 border rounded-[10px] text-left transition-colors relative block focus:outline-hidden ${
+                        dispute.hasWorkerUnreadUpdate 
+                          ? 'bg-[#FEE2E2]/30 border-[#FECACA] hover:bg-[#FEE2E2]/50' 
+                          : 'bg-[#FAFAF9] border-[#E7E5E1] hover:bg-[#F5F5F4]'
+                      }`}
+                    >
+                      {dispute.hasWorkerUnreadUpdate && (
+                        <span className="absolute top-3 right-3 w-2.5 h-2.5 rounded-full bg-[#B91C1C] ring-1 ring-white" />
+                      )}
+                      
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-[11px] font-mono text-[#6B7280] font-semibold">
+                          Case #{dispute.refNumber}
+                        </span>
+                        <span className={`px-1.5 py-0.2 rounded text-[9.5px] font-[700] uppercase tracking-wider ${
+                          dispute.status === 'open' 
+                            ? 'bg-[#FEE2E2] text-[#991B1B]' 
+                            : dispute.status === 'under_mediation' 
+                            ? 'bg-[#FEF3C7] text-[#92400E]' 
+                            : 'bg-[#E8F3EE] text-[#1F4D3D]'
+                        }`}>
+                          {dispute.status === 'under_mediation' ? 'In Mediation' : dispute.status}
+                        </span>
+                      </div>
 
-              <div className="pt-2 text-center">
-                <span className="text-[11px] text-[#6B7280]">
-                  Delhi Shramik Cooperative Union · Emergency Helpline: 1800-11-2233
+                      <h4 className="text-[13px] font-[650] text-[#14181F] leading-tight">
+                        {dispute.summary}
+                      </h4>
+                      
+                      <div className="mt-2 flex items-center justify-between text-[11.5px] text-[#6B7280]">
+                        <span>Client: <strong className="text-[#14181F]">{dispute.complainantName}</strong></span>
+                        <span className="font-semibold text-[#B91C1C] tabular-nums">₹{dispute.escrowAmount}</span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              <div className="pt-4 text-center border-t border-[#E7E5E1] mt-6">
+                <span className="text-[11px] text-[#6B7280] block font-medium">
+                  Delhi Shramik Cooperative Union · Arbitration Cell
+                </span>
+                <span className="text-[10px] text-[#9CA3AF] block mt-0.5">
+                  Emergency helpline &amp; mutual trust desk: 1800-11-2233
                 </span>
               </div>
             </div>

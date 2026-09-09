@@ -30,7 +30,7 @@ export const DEFAULT_WORKERS: WorkerProfile[] = [
     ncctStanding: 'GOOD STANDING',
     ncctDetails: 'Delhi State Cooperative Federation voting shareholder with full mutual welfare ledger access.',
     skills: ['Pipe Diagnostics', 'Sanitary Fixtures', 'Geyser Line Repair', 'Overhead Tank Valves', 'Drain Clearance'],
-    photoUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=faces',
+    photoUrl: WORKER_PHOTO_BY_SERVICE['plumbing'],
     summary: 'Master plumber with 14 years experience in residential line pressure and concealed leak diagnostics.',
     hourlyRate: 350,
     primaryServiceId: 'plumbing'
@@ -59,7 +59,7 @@ export const DEFAULT_WORKERS: WorkerProfile[] = [
     ncctStanding: 'GOOD STANDING',
     ncctDetails: 'Karigar Mahasangh technical board voting delegate.',
     skills: ['Distribution Boards', 'Inverter Setup', 'Load Balancing', 'Tripping Diagnostics', 'Short Circuit Isolation'],
-    photoUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&h=400&fit=crop&crop=faces',
+    photoUrl: WORKER_PHOTO_BY_SERVICE['electrical'],
     summary: 'Licensed electrical technician specializing in home earthing inspection, overload prevention, and safe modular distribution boards.',
     hourlyRate: 380,
     primaryServiceId: 'electrical'
@@ -88,7 +88,7 @@ export const DEFAULT_WORKERS: WorkerProfile[] = [
     ncctStanding: 'GOOD STANDING',
     ncctDetails: 'Senior executive member of Northern Woodworkers Cooperative.',
     skills: ['Door Alignment', 'Hydraulic Hinges', 'Drawer Slide Replacement', 'Modular Kitchen Hardware', 'Antique Restoration'],
-    photoUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=400&fit=crop&crop=faces',
+    photoUrl: WORKER_PHOTO_BY_SERVICE['carpentry'],
     summary: 'Third-generation craftsman focusing on architectural door framing, hydraulic hinge replacement, and long-lasting hardwood repairs.',
     hourlyRate: 360,
     primaryServiceId: 'carpentry'
@@ -117,7 +117,7 @@ export const DEFAULT_WORKERS: WorkerProfile[] = [
     ncctStanding: 'GOOD STANDING',
     ncctDetails: 'Community health mutual worker representative.',
     skills: ['Mobility Support', 'Post-Op Care', 'Daily Vitals Tracking', 'Elderly Companionship', 'Medication Management'],
-    photoUrl: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=400&h=400&fit=crop&crop=faces',
+    photoUrl: WORKER_PHOTO_BY_SERVICE['elder-care'],
     summary: 'Trained caregiver with certified clinical nursing assistant background. Patient, compassionate, and skilled in gentle post-hospitalization rehab.',
     hourlyRate: 420,
     primaryServiceId: 'elder-care'
@@ -146,7 +146,7 @@ export const DEFAULT_WORKERS: WorkerProfile[] = [
     ncctStanding: 'GOOD STANDING',
     ncctDetails: 'Samabaya material bank authorized applicator.',
     skills: ['Wall Texturing', 'Waterproofing Barrier', 'Touch-up Coats', 'Putty Surface Prep', 'Anti-fungal Primer'],
-    photoUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&h=400&fit=crop&crop=faces',
+    photoUrl: WORKER_PHOTO_BY_SERVICE['painting'],
     summary: 'Skilled painting technician with deep knowledge of anti-fungal primers, damp barrier treatments, and zero-VOC indoor paints.',
     hourlyRate: 320,
     primaryServiceId: 'painting'
@@ -175,7 +175,7 @@ export const DEFAULT_WORKERS: WorkerProfile[] = [
     ncctStanding: 'GOOD STANDING',
     ncctDetails: 'Fleet coordinator for NCR Chalak cooperative pool.',
     skills: ['Apartment Shifting', 'Heavy Item Transport', 'Safe Packaging', 'Interstate Logistics', 'Appliance Rigging'],
-    photoUrl: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=400&h=400&fit=crop&crop=faces',
+    photoUrl: WORKER_PHOTO_BY_SERVICE['moving'],
     summary: 'Commercial vehicle specialist and logistics lead with 12 years of zero-breakage track record in household goods relocation.',
     hourlyRate: 400,
     primaryServiceId: 'moving'
@@ -204,7 +204,7 @@ export const DEFAULT_WORKERS: WorkerProfile[] = [
     ncctStanding: 'GOOD STANDING',
     ncctDetails: 'Women mutual welfare fund secretary.',
     skills: ['Floor Sanitization', 'Deep Kitchen Scrubbing', 'Linen Hygiene', 'Eco-Friendly Cleaning', 'Appliance Degreasing'],
-    photoUrl: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=400&h=400&fit=crop&crop=faces',
+    photoUrl: WORKER_PHOTO_BY_SERVICE['domestic-help'],
     summary: 'Experienced residential hygiene professional trained in enzymatic non-toxic cleaning methods, food-safe surface sanitization, and laundry care.',
     hourlyRate: 300,
     primaryServiceId: 'domestic-help'
@@ -233,7 +233,7 @@ export const DEFAULT_WORKERS: WorkerProfile[] = [
     ncctStanding: 'GOOD STANDING',
     ncctDetails: 'Sangham cooperative tool library board trustee.',
     skills: ['AC Condenser Diagnosis', 'Washing Machine Motors', 'Microwave Magnetrons', 'RO Membrane Change', 'Refrigerator Compressors'],
-    photoUrl: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=400&h=400&fit=crop&crop=faces',
+    photoUrl: WORKER_PHOTO_BY_SERVICE['appliance-repair'],
     summary: 'Senior appliance technician experienced across all major Indian and international domestic white-goods brands.',
     hourlyRate: 390,
     primaryServiceId: 'appliance-repair'
@@ -262,7 +262,7 @@ export const DEFAULT_WORKERS: WorkerProfile[] = [
     ncctStanding: 'GOOD STANDING',
     ncctDetails: 'Native flora seed library coordinator.',
     skills: ['Balcony Planters', 'Organic Compost Soil', 'Neem Pest Prevention', 'Seasonal Pruning', 'Drip Micro-irrigation'],
-    photoUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=400&fit=crop&crop=faces',
+    photoUrl: WORKER_PHOTO_BY_SERVICE['gardening'],
     summary: 'Horticulturist with deep understanding of native Indian balcony plants, drip irrigation micro-systems, and natural neem pest treatments.',
     hourlyRate: 310,
     primaryServiceId: 'gardening'
@@ -291,7 +291,7 @@ export const DEFAULT_WORKERS: WorkerProfile[] = [
     ncctStanding: 'GOOD STANDING',
     ncctDetails: 'Karigar Samiti emergency mutual fund member.',
     skills: ['Wall Bracket Anchors', 'Tile Grout Restoration', 'Window Mesh Fitting', 'Minor Plastering', 'Door Handle Latches'],
-    photoUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&h=400&fit=crop&crop=faces',
+    photoUrl: WORKER_PHOTO_BY_SERVICE['general-repair'],
     summary: 'General handyman and mason skilled in structural drywall fasteners, tile replacements, water sealant caulking, and general household installations.',
     hourlyRate: 340,
     primaryServiceId: 'general-repair'

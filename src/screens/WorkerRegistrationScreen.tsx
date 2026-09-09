@@ -316,6 +316,7 @@ export const WorkerRegistrationScreen: React.FC<WorkerRegistrationScreenProps> =
                       src={photoPreview} 
                       alt="Profile preview" 
                       className="w-full h-full object-cover" 
+                      referrerPolicy="no-referrer"
                     />
                   ) : (
                     <div className="flex flex-col items-center text-[#9CA3AF]">

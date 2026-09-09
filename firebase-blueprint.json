@@ -71,6 +71,34 @@
         }
       },
       "required": ["workerId", "status"]
+    },
+    "Dispute": {
+      "title": "Dispute",
+      "description": "A booking dispute between citizen and cooperative worker",
+      "type": "object",
+      "properties": {
+        "refNumber": { "type": "string" },
+        "bookingId": { "type": "string" },
+        "bookingRef": { "type": "string" },
+        "workerId": { "type": "string" },
+        "customerPhone": { "type": "string" },
+        "complainantName": { "type": "string" },
+        "respondentName": { "type": "string" },
+        "trade": { "type": "string" },
+        "category": { "type": "string" },
+        "summary": { "type": "string" },
+        "escrowAmount": { "type": "number" },
+        "severity": { "type": "string" },
+        "lodgedBy": { "type": "string" },
+        "lodgedDate": { "type": "string" },
+        "status": {
+          "type": "string",
+          "enum": ["open", "under_mediation", "resolved"]
+        },
+        "hasWorkerUnreadUpdate": { "type": "boolean" },
+        "hasCustomerUnreadUpdate": { "type": "boolean" }
+      },
+      "required": ["bookingId", "workerId", "status"]
     }
   },
   "firestore": {
@@ -81,6 +109,10 @@
     "/bookings/{bookingId}": {
       "schema": "Booking",
       "description": "Collection of citizen service bookings dispatched to cooperative workers"
+    },
+    "/disputes/{disputeId}": {
+      "schema": "Dispute",
+      "description": "Collection of consumer booking disputes mediated by the cooperative board"
     }
   }
 }

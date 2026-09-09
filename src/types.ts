@@ -7,7 +7,8 @@ export type ScreenType =
   | 'active_job'
   | 'earnings'
   | 'profile'
-  | 'reviews';
+  | 'reviews'
+  | 'dispute_thread';
 
 export type JobCategory = 
   | 'plumbing'
@@ -150,3 +151,40 @@ export interface CustomerReview {
   comment: string;
   tags: string[];
 }
+
+export interface DisputeMessage {
+  id: string;
+  senderRole: 'customer' | 'worker' | 'admin';
+  senderName: string;
+  message: string;
+  timestamp: any;
+}
+
+export interface Dispute {
+  id: string;
+  refNumber: string;
+  bookingId: string;
+  bookingRef: string;
+  workerId: string;
+  customerId?: string;
+  customerPhone?: string;
+  complainantName: string;
+  respondentName: string;
+  trade: string;
+  category: string;
+  summary: string;
+  escrowAmount: number;
+  severity: string;
+  lodgedBy: string;
+  lodgedDate: string;
+  status: 'open' | 'under_mediation' | 'resolved';
+  messages: DisputeMessage[];
+  hasWorkerUnreadUpdate: boolean;
+  hasCustomerUnreadUpdate: boolean;
+  resolutionDecision?: string;
+  resolvedAt?: any;
+  resolvedBy?: string;
+  createdAt?: any;
+  updatedAt?: any;
+}
+
