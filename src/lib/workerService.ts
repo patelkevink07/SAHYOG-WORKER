@@ -2,6 +2,7 @@ import { collection, onSnapshot, getDocs, doc, getDoc, setDoc } from 'firebase/f
 import { db } from './firebase';
 import { WorkerProfile, CustomerReview } from '../types';
 import { handleFirestoreError, OperationType } from './bookingService';
+import { WORKER_PHOTO_BY_SERVICE } from './workerPhotos';
 
 // Fallback seed data for the 10 federation trade workers
 export const DEFAULT_WORKERS: WorkerProfile[] = [
@@ -324,7 +325,7 @@ export function mapFirestoreWorkerDoc(id: string, data: Record<string, any>): Wo
     ? data.subservices 
     : (Array.isArray(data.skills) && data.skills.length > 0 ? data.skills : fallback.skills);
 
-  const photoUrl = data.photoUrl || fallback.photoUrl;
+  const photoUrl = WORKER_PHOTO_BY_SERVICE[primaryServiceId] || fallback.photoUrl;
   const summary = data.summary || fallback.summary;
   const hourlyRate = typeof data.hourlyRate === 'number' ? data.hourlyRate : fallback.hourlyRate;
   const isOnline = typeof data.isOnline === 'boolean' ? data.isOnline : undefined;

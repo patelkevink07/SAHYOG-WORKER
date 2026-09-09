@@ -75,22 +75,22 @@ export const WorkerSelectionScreen: React.FC<WorkerSelectionScreenProps> = ({
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#FAFAF9] text-[#14181F] flex flex-col items-center px-4 py-8 antialiased">
-      <div className="w-full max-w-3xl">
+    <div className="min-h-screen bg-[#FAFAF9] text-[#14181F] flex flex-col items-center px-4 sm:px-6 md:px-8 py-8 md:py-12 antialiased">
+      <div className="w-full max-w-5xl lg:max-w-6xl">
         {/* Header Section */}
         <div className="flex items-center justify-between mb-6 pb-4 border-b border-[#E7E5E1]">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3.5">
             <SahyogLogo size="md" />
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-[20px] sm:text-[22px] font-[650] text-[#14181F] tracking-tight">
+                <h1 className="text-[20px] sm:text-[22px] md:text-[26px] font-[650] text-[#14181F] tracking-tight">
                   Switch Worker Persona
                 </h1>
-                <span className="text-[10px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded-[4px] bg-[#E7E5E1] text-[#14181F]">
+                <span className="text-[10px] md:text-[11px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded-[4px] bg-[#E7E5E1] text-[#14181F]">
                   Demo Registry
                 </span>
               </div>
-              <p className="text-[13px] text-[#6B7280] mt-0.5">
+              <p className="text-[13px] md:text-[14px] text-[#6B7280] mt-0.5">
                 Select any trade partner to operate their live Sahyog dispatch terminal
               </p>
             </div>
@@ -111,16 +111,16 @@ export const WorkerSelectionScreen: React.FC<WorkerSelectionScreenProps> = ({
         </div>
 
         {/* Informational banner */}
-        <div className="mb-6 p-3.5 bg-[#FFFFFF] border border-[#E7E5E1] rounded-[10px] flex items-start gap-3 shadow-xs">
+        <div className="mb-6 p-4 bg-[#FFFFFF] border border-[#E7E5E1] rounded-[10px] md:rounded-[12px] flex items-start gap-3 shadow-xs">
           <ShieldCheck className="w-5 h-5 text-[#1F4D3D] flex-shrink-0 mt-0.5" />
-          <div className="text-[12.5px] text-[#4B5563] leading-relaxed">
+          <div className="text-[13px] text-[#4B5563] leading-relaxed">
             <span className="font-[600] text-[#14181F]">10 Federation Trades Connected: </span>
             Each card links directly to that worker's assigned dispatch queue in Firestore. Selecting a worker immediately updates the incoming bookings listener, acceptance actions, and status updates for that persona.
           </div>
         </div>
 
-        {/* Worker Cards Grid (10 workers) */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+        {/* Worker Cards Grid (10 workers, 1 col on mobile, 2 col on sm/md, 3 col on lg) */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 md:gap-4">
           {workers.map((worker) => {
             const isCurrent = worker.id === currentWorkerId;
             return (
@@ -129,7 +129,7 @@ export const WorkerSelectionScreen: React.FC<WorkerSelectionScreenProps> = ({
                 type="button"
                 id={`select-worker-${worker.id}`}
                 onClick={() => onSelectWorker(worker)}
-                className={`w-full p-4 rounded-[10px] border text-left transition-all duration-150 relative flex flex-col justify-between group focus:outline-hidden focus:ring-2 focus:ring-[#1F4D3D] focus:ring-offset-1 ${
+                className={`w-full p-4 md:p-5 rounded-[10px] md:rounded-[12px] border text-left transition-all duration-150 relative flex flex-col justify-between group focus:outline-hidden focus:ring-2 focus:ring-[#1F4D3D] focus:ring-offset-1 ${
                   isCurrent 
                     ? 'bg-[#F4F9F6] border-[#1F4D3D] shadow-xs' 
                     : 'bg-[#FFFFFF] border-[#E7E5E1] hover:border-[#CBD5E1] hover:shadow-xs'
@@ -146,8 +146,16 @@ export const WorkerSelectionScreen: React.FC<WorkerSelectionScreenProps> = ({
                 <div>
                   {/* Top row: Avatar/Icon + Trade & Name */}
                   <div className="flex items-start gap-3">
-                    <div className="w-12 h-12 rounded-[10px] bg-[#FAFAF9] border border-[#E7E5E1] flex items-center justify-center flex-shrink-0 group-hover:bg-[#FFFFFF] transition-colors">
-                      {getTradeIcon(worker.trade, worker.primaryServiceId)}
+                    <div className="w-12 h-12 rounded-[10px] overflow-hidden bg-[#FAFAF9] border border-[#E7E5E1] flex items-center justify-center flex-shrink-0 group-hover:bg-[#FFFFFF] transition-colors">
+                      {worker.photoUrl ? (
+                        <img
+                          src={worker.photoUrl}
+                          alt={worker.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        getTradeIcon(worker.trade, worker.primaryServiceId)
+                      )}
                     </div>
 
                     <div className="flex-1 min-w-0 pr-12">
@@ -156,7 +164,7 @@ export const WorkerSelectionScreen: React.FC<WorkerSelectionScreenProps> = ({
                           {worker.trade}
                         </span>
                       </div>
-                      <h3 className="text-[15px] font-[650] text-[#14181F] leading-snug truncate mt-0.5 group-hover:text-[#1F4D3D] transition-colors">
+                      <h3 className="text-[15px] md:text-[16px] font-[650] text-[#14181F] leading-snug truncate mt-0.5 group-hover:text-[#1F4D3D] transition-colors">
                         {worker.name}
                       </h3>
                       <p className="text-[11.5px] text-[#6B7280] truncate mt-0.5 font-mono">
@@ -202,7 +210,7 @@ export const WorkerSelectionScreen: React.FC<WorkerSelectionScreenProps> = ({
                   <span className={`inline-flex items-center gap-1 font-[600] text-[12px] transition-colors ${
                     isCurrent ? 'text-[#1F4D3D]' : 'text-[#4B5563] group-hover:text-[#1F4D3D]'
                   }`}>
-                    <span>{isCurrent ? 'Continue as this worker' : 'Switch to this worker'}</span>
+                    <span>{isCurrent ? 'Continue' : 'Switch'}</span>
                     <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
                   </span>
                 </div>
@@ -212,7 +220,7 @@ export const WorkerSelectionScreen: React.FC<WorkerSelectionScreenProps> = ({
         </div>
 
         {/* Footer info */}
-        <div className="mt-8 pt-4 border-t border-[#E7E5E1] text-center text-[12px] text-[#6B7280]">
+        <div className="mt-8 pt-4 border-t border-[#E7E5E1] text-center text-[12px] md:text-[13px] text-[#6B7280]">
           National Cooperative Consumer Federation & Labour Mutual · SIH26089
         </div>
       </div>

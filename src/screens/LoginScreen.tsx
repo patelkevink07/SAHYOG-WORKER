@@ -58,22 +58,22 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
   };
 
   return (
-    <div className="min-h-screen bg-[#FAFAF9] flex flex-col justify-center items-center px-4 py-8">
-      {/* Centered Minimal Container */}
-      <div className="w-full max-w-sm">
+    <div className="min-h-screen bg-[#FAFAF9] flex flex-col justify-center items-center px-4 py-8 md:py-12">
+      {/* Centered Responsive Container */}
+      <div className="w-full max-w-sm md:max-w-md">
         {/* Brand mark */}
         <div className="flex flex-col items-center text-center mb-6">
           <SahyogLogo size="lg" variant="card" />
-          <h1 className="text-[20px] sm:text-[22px] font-[650] text-[#14181F] mt-3.5 tracking-tight">
+          <h1 className="text-[20px] sm:text-[22px] md:text-[24px] font-[650] text-[#14181F] mt-3.5 tracking-tight">
             Worker Partner Portal
           </h1>
-          <p className="text-[13px] font-[400] text-[#6B7280] mt-0.5">
+          <p className="text-[13px] md:text-[14px] font-[400] text-[#6B7280] mt-0.5">
             National Cooperative Mesh · SIH26089
           </p>
         </div>
 
         {/* Login Card */}
-        <div className="bg-[#FFFFFF] border border-[#E7E5E1] rounded-[10px] p-6 shadow-xs">
+        <div className="bg-[#FFFFFF] border border-[#E7E5E1] rounded-[10px] md:rounded-[12px] p-6 md:p-8 shadow-xs">
           {/* Method Switcher */}
           <div className="grid grid-cols-2 p-1 bg-[#FAFAF9] border border-[#E7E5E1] rounded-[8px] mb-5">
             <button

@@ -142,9 +142,17 @@ export const BottomNav: React.FC<BottomNavProps> = ({
             <div className="mt-4 p-3 rounded-[8px] bg-[#FAFAF9] border border-[#E7E5E1] text-left">
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2 min-w-0">
-                  <div className="w-7 h-7 rounded-full bg-[#1F4D3D] text-[#FFFFFF] text-[11px] font-bold flex items-center justify-center flex-shrink-0">
-                    {worker.avatarInitials}
-                  </div>
+                  {worker.photoUrl ? (
+                    <img
+                      src={worker.photoUrl}
+                      alt={worker.name}
+                      className="w-7 h-7 rounded-full object-cover flex-shrink-0 ring-1 ring-[#E7E5E1]"
+                    />
+                  ) : (
+                    <div className="w-7 h-7 rounded-full bg-[#1F4D3D] text-[#FFFFFF] text-[11px] font-bold flex items-center justify-center flex-shrink-0">
+                      {worker.avatarInitials}
+                    </div>
+                  )}
                   <div className="min-w-0">
                     <p className="text-[12.5px] font-[650] text-[#14181F] truncate leading-tight">
                       {worker.name}
