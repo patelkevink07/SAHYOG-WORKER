@@ -49,11 +49,14 @@ export async function testConnection() {
 
 // Map Firestore booking document data into the worker app's JobRequest shape
 export function mapBookingDocToJobRequest(id: string, data: Record<string, any>): JobRequest {
-  const rawCategory = data.category || data.serviceCategory || data.service || 'Plumbing';
-  const category: JobCategory = [
-    'Plumbing', 'Electrical', 'Carpentry', 'Painting', 'Domestic Help',
-    'Caregiving', 'Driving', 'Gardening', 'Cleaning', 'Appliance Technician'
-  ].includes(rawCategory) ? rawCategory : 'Plumbing';
+  const rawCategory = (data.category || data.serviceCategory || data.service || 'general-repair').toLowerCase();
+  const validCategories: JobCategory[] = [
+    'plumbing', 'electrical', 'carpentry', 'painting', 'domestic-help',
+    'elder-care', 'moving', 'appliance-repair', 'gardening', 'general-repair'
+  ];
+  const category: JobCategory = validCategories.includes(rawCategory as JobCategory) 
+    ? (rawCategory as JobCategory) 
+    : 'general-repair';
 
   // Determine urgency
   let urgency: JobUrgency = 'Standard';

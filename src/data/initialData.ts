@@ -37,7 +37,7 @@ export const INITIAL_INCOMING_JOBS: JobRequest[] = [
   {
     id: 'job-1',
     title: 'Plumbing · Main Pipe Valve Leakage',
-    category: 'Plumbing',
+    category: 'plumbing',
     urgency: 'Emergency',
     urgencyLabel: 'Direct Citizen Request',
     customerName: 'Ananya Sharma',
@@ -57,7 +57,7 @@ export const INITIAL_INCOMING_JOBS: JobRequest[] = [
   {
     id: 'job-2',
     title: 'Sanitary Installation',
-    category: 'Plumbing',
+    category: 'plumbing',
     urgency: 'Scheduled',
     urgencyLabel: 'Scheduled Slot',
     customerName: 'Devendra Malik',
@@ -77,7 +77,7 @@ export const INITIAL_INCOMING_JOBS: JobRequest[] = [
   {
     id: 'job-3',
     title: 'Drain Blockage Clearance',
-    category: 'Plumbing',
+    category: 'plumbing',
     urgency: 'Standard',
     urgencyLabel: 'Standard Booking',
     customerName: 'Sunita Rao',
@@ -97,7 +97,7 @@ export const INITIAL_INCOMING_JOBS: JobRequest[] = [
   {
     id: 'job-4',
     title: 'Overhead Tank Float Valve Replacement',
-    category: 'Plumbing',
+    category: 'plumbing',
     urgency: 'Standard',
     urgencyLabel: 'Standard Booking',
     customerName: 'Harish Chander',

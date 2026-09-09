@@ -308,7 +308,7 @@ export function getInitials(name: string): string {
 
 // Convert Firestore worker document into WorkerProfile
 export function mapFirestoreWorkerDoc(id: string, data: Record<string, any>): WorkerProfile {
-  const fallback = DEFAULT_WORKERS.find(w => w.id === id) || DEFAULT_WORKERS[0];
+  const fallback = DEFAULT_WORKERS.find(w => w.primaryServiceId === data.primaryServiceId) || DEFAULT_WORKERS[0];
 
   const name = data.name || fallback.name;
   const trade = data.primaryServiceName || data.trade || fallback.trade;

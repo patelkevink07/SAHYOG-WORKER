@@ -1,5 +1,5 @@
 import React from 'react';
-import { JobRequest } from '../types';
+import { JobRequest, JOB_CATEGORY_LABELS } from '../types';
 import { 
   ArrowLeft, 
   MapPin, 
@@ -62,7 +62,7 @@ export const JobDetailScreen: React.FC<JobDetailScreenProps> = ({
                 </span>
               )}
               <span className="text-[12px] md:text-[13px] text-[#6B7280]">
-                {job.category}
+                {JOB_CATEGORY_LABELS[job.category]}
               </span>
             </div>
             <h2 className="text-[20px] sm:text-[24px] md:text-[28px] font-[650] text-[#14181F] leading-tight">

@@ -9,16 +9,29 @@ export type ScreenType =
   | 'reviews';
 
 export type JobCategory = 
-  | 'Plumbing'
-  | 'Electrical'
-  | 'Carpentry'
-  | 'Painting'
-  | 'Domestic Help'
-  | 'Caregiving'
-  | 'Driving'
-  | 'Gardening'
-  | 'Cleaning'
-  | 'Appliance Technician';
+  | 'plumbing'
+  | 'electrical'
+  | 'carpentry'
+  | 'painting'
+  | 'domestic-help'
+  | 'elder-care'
+  | 'moving'
+  | 'appliance-repair'
+  | 'gardening'
+  | 'general-repair';
+
+export const JOB_CATEGORY_LABELS: Record<JobCategory, string> = {
+  'plumbing': 'Plumbing',
+  'electrical': 'Electrical',
+  'carpentry': 'Carpentry',
+  'painting': 'Painting',
+  'domestic-help': 'Domestic Help',
+  'elder-care': 'Elder Care',
+  'moving': 'Moving',
+  'appliance-repair': 'Appliance Repair',
+  'gardening': 'Gardening',
+  'general-repair': 'General Repair'
+};
 
 export type JobUrgency = 'Emergency' | 'Standard' | 'Scheduled';
 

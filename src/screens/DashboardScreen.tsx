@@ -1,5 +1,5 @@
 import React from 'react';
-import { JobRequest, WorkerProfile } from '../types';
+import { JobRequest, WorkerProfile, JOB_CATEGORY_LABELS } from '../types';
 import { 
   CheckCircle, 
   MapPin, 
@@ -252,7 +252,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                         </span>
                       )}
                       <span className="text-[12px] text-[#6B7280]">
-                        {job.category}
+                        {JOB_CATEGORY_LABELS[job.category]}
                       </span>
                     </div>
 
